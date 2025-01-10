@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="key_sym_size">30.dp</dimen>
+    <dimen name="micro">1.dp</dimen>
+    <dimen name="very_tiny">2.dp</dimen>
+    <dimen name="tiny">4.dp</dimen>
+    <dimen name="tiny_small">6.dp</dimen>
+    <dimen name="small">8.dp</dimen>
+    <dimen name="normal">16.dp</dimen>
+    <dimen name="medium">32.dp</dimen>
+    <dimen name="large">64.dp</dimen>
+</resources>

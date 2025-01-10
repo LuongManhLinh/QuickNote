@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">QuickNote</string>
+
+    <string name="today">Hôm nay</string>
+    <string name="tomorrow">Ngày mai</string>
+    <string name="yesterday">Hôm qua</string>
+    <string name="n_day_before">%s ngày trước</string>
+    <string name="n_day_after">%s ngày tới</string>
+
+    <string name="money_UNIT">Đồng</string>
+    <string name="money_K">Nghìn Đồng</string>
+    <string name="money_M">Triệu Đồng</string>
+    
+    <string name="done">Xong</string>
+    <string name="cancel">Hủy</string>
+
+    <string name="unable_to_open_link">Không thể mở liên kết</string>
+</resources>
