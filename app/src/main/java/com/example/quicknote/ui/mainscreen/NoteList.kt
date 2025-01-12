@@ -1,11 +1,18 @@
 package com.example.quicknote.ui.mainscreen
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContentPresentation
@@ -13,15 +20,18 @@ import com.example.quicknote.data.entity.NoteContentPresentation
 @Composable
 internal fun NoteList(
     modifier: Modifier = Modifier,
+    listState: LazyListState,
     noteUIList: List<NoteUIState>,
     notePresentationList: List<NoteContentPresentation>,
     onNoteChanged: (Note, Int) -> Unit,
     onNoteContentAdded: (Int, Int) -> Unit,
     onNoteEditingCancel: (Int) -> Unit,
-    onNoteEditingDone: (Int) -> Unit
+    onNoteEditingDone: (Int) -> Unit,
+    onNoteLongPress: (Int) -> Unit
 ) {
     LazyColumn(
-        modifier = modifier
+        modifier = modifier,
+        state = listState
     ) {
         items(noteUIList.size) { idx ->
             val noteUI = noteUIList[idx]
@@ -32,21 +42,35 @@ internal fun NoteList(
                         .padding(dimensionResource(R.dimen.small)),
                     note = noteUI.note,
                     noteIdx = idx,
-                    contentIdxToFocus = noteUI.contentIdxToFocus,
                     onNoteChanged = onNoteChanged,
                     notePresentationList = notePresentationList,
                     onNoteContentAdded = onNoteContentAdded,
+                    onNoteEditingUndo = {},
                     onNoteEditingCancel = onNoteEditingCancel,
+                    onNoteEditingDelete = {},
                     onNoteEditingDone = onNoteEditingDone
                 )
             } else {
                 NoteItem(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(dimensionResource(R.dimen.small)),
+                        .padding(dimensionResource(R.dimen.small))
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { onNoteLongPress(idx) }
+                            )
+                        },
                     note = noteUI.note
                 )
             }
+        }
+
+        item {
+            val screenHeight = LocalConfiguration.current.screenHeightDp
+            Spacer(
+                modifier = Modifier
+                    .height(screenHeight.dp / 2)
+            )
         }
     }
 }

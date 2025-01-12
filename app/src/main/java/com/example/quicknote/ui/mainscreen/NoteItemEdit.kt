@@ -1,12 +1,10 @@
 package com.example.quicknote.ui.mainscreen
 
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -18,10 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -30,21 +29,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -59,6 +53,7 @@ import com.example.quicknote.data.entity.Key
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.data.entity.NoteContentPresentation
+import com.example.quicknote.ui.custom.CustomTextField
 import com.example.quicknote.ui.theme.QuickNoteTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -69,25 +64,29 @@ internal fun NoteItemEdit(
     modifier: Modifier = Modifier,
     note: Note,
     noteIdx: Int,
-    contentIdxToFocus: Int,
     onNoteChanged: (Note, Int) -> Unit,
     notePresentationList: List<NoteContentPresentation>,
     onNoteContentAdded: (Int, Int) -> Unit,
+    onNoteEditingUndo: (Int) -> Unit,
     onNoteEditingCancel: (Int) -> Unit,
-    onNoteEditingDone: (Int) -> Unit
+    onNoteEditingDelete: (Int) -> Unit,
+    onNoteEditingDone: (Int) -> Unit,
 ) {
     Column(
         modifier = modifier
     ) {
         NoteItemEditTopButtons(
-            modifier = Modifier.align(Alignment.End),
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(bottom = dimensionResource(R.dimen.small)),
+            onUndo = { onNoteEditingUndo(noteIdx) },
             onCancelled = { onNoteEditingCancel(noteIdx) },
+            onDelete = { onNoteEditingDelete(noteIdx) },
             onDone = { onNoteEditingDone(noteIdx) }
         )
         NoteItemEditContent(
             modifier = Modifier.fillMaxWidth(),
             note = note,
-            contentIdxToFocus = contentIdxToFocus,
             onNoteChanged = { onNoteChanged(it, noteIdx) }
         )
         NoteItemEditBottomButtons(
@@ -103,25 +102,21 @@ internal fun NoteItemEdit(
 private fun NoteItemEditContent(
     modifier: Modifier = Modifier,
     note: Note,
-    contentIdxToFocus: Int,
     onNoteChanged: (Note) -> Unit,
 ) {
-    val focusRequester = remember { FocusRequester() }
-
     Card(
         modifier = modifier
     ) {
         Column(
             modifier = Modifier
-                .padding(dimensionResource(R.dimen.small)),
+                .padding(
+                    top = dimensionResource(R.dimen.small),
+                    bottom = dimensionResource(R.dimen.small),
+                    start = dimensionResource(R.dimen.small)
+                ),
             verticalArrangement = Arrangement.Center,
         ) {
             NoteTitleEdit(
-                modifier = if (contentIdxToFocus < 0) {
-                    Modifier.focusRequester(focusRequester)
-                } else {
-                    Modifier
-                },
                 title = note.title,
                 onTitleChanged = { title ->
                     onNoteChanged(note.copy(title = title))
@@ -129,85 +124,154 @@ private fun NoteItemEditContent(
             )
 
             note.contents.forEachIndexed { idx, content ->
-
                 HorizontalDivider(Modifier.padding(vertical = dimensionResource(R.dimen.small)))
-                Box(
-                    modifier = if (idx == contentIdxToFocus) {
-                        Log.e("NoteItemEditContent", "Focus requested for idx: $idx")
-                        Modifier.focusRequester(focusRequester)
-                    } else {
-                        Modifier
-                    }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    when (content) {
-                        is NoteContent.Text -> {
-                            NoteContentTextEdit(
-                                text = content.text,
-                                onTextChanged = { text ->
-                                    onNoteChanged(
-                                        note.copy(
-                                            contents = note.contents.toMutableList().apply {
-                                                this[idx] = content.copy(text = text)
-                                            }
-                                        )
+                    NoteItemEditMainContent(
+                        modifier = Modifier.weight(1f),
+                        note = note,
+                        contentIdx = idx,
+                        content = content,
+                        onNoteChanged = onNoteChanged
+                    )
+                    
+                    Row(
+                        modifier = Modifier.padding(
+                            start = dimensionResource(R.dimen.tiny),
+                            end = dimensionResource(R.dimen.small)
+                        ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.clickable {
+                                onNoteChanged(
+                                    note.copy(
+                                        contents = note.contents.toMutableList().apply {
+                                            removeAt(idx)
+                                        }
                                     )
+                                )
+                            }
+                        )
+                        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+                        Column {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = null,
+                                modifier = Modifier.clickable {
+                                    if (idx > 0) {
+                                        onNoteChanged(
+                                            note.copy(
+                                                contents = note.contents.toMutableList().apply {
+                                                    val temp = this[idx]
+                                                    this[idx] = this[idx - 1]
+                                                    this[idx - 1] = temp
+                                                }
+                                            )
+                                        )
+                                    }
+                                }
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                modifier = Modifier.clickable {
+                                    if (idx < note.contents.size - 1) {
+                                        onNoteChanged(
+                                            note.copy(
+                                                contents = note.contents.toMutableList().apply {
+                                                    val temp = this[idx]
+                                                    this[idx] = this[idx + 1]
+                                                    this[idx + 1] = temp
+                                                }
+                                            )
+                                        )
+                                    }
                                 }
                             )
                         }
-
-                        is NoteContent.Datetime -> {
-                            NoteContentDatetimeEdit(
-                                datetime = content.datetime,
-                                onDatetimeChanged = {
-                                    onNoteChanged(
-                                        note.copy(
-                                            contents = note.contents.toMutableList().apply {
-                                                this[idx] = content.copy(datetime = it)
-                                            }
-                                        )
-                                    )
-                                }
-                            )
-                        }
-
-                        is NoteContent.KeyCombination -> {
-                            NoteContentKeyCombinationEdit(
-                                combination = content.combination
-                            )
-                        }
-
-                        is NoteContent.Link -> {
-                            NoteContentLinkEdit(
-                                link = content.url,
-                                onLinkChanged = { link ->
-                                    onNoteChanged(
-                                        note.copy(
-                                            contents = note.contents.toMutableList().apply {
-                                                this[idx] = content.copy(url = link)
-                                            }
-                                        )
-                                    )
-                                }
-                            )
-                        }
-
-                        is NoteContent.Money -> {
-                            NoteContentMoneyEdit(
-                                amount = content.amount,
-                                unit = MoneyUnit.K
-                            )
-                        }
-
                     }
-                }
 
+                }
             }
         }
     }
+}
 
-    LaunchedEffect(note.contents.size) {
-        Log.e("NoteItemEditContent", "Requesting focus for idx: $contentIdxToFocus")
-        focusRequester.requestFocus()
+@Composable
+private fun NoteItemEditMainContent(
+    modifier: Modifier = Modifier,
+    note: Note,
+    contentIdx: Int,
+    content: NoteContent,
+    onNoteChanged: (Note) -> Unit
+) {
+    when (content) {
+        is NoteContent.Text -> {
+            NoteContentTextEdit(
+                modifier = modifier,
+                text = content.text,
+                onTextChanged = { text ->
+                    onNoteChanged(
+                        note.copy(
+                            contents = note.contents.toMutableList().apply {
+                                this[contentIdx] = content.copy(text = text)
+                            }
+                        )
+                    )
+                }
+            )
+        }
+
+        is NoteContent.Datetime -> {
+            NoteContentDatetimeEdit(
+                modifier = modifier,
+                datetime = content.datetime,
+                onDatetimeChanged = {
+                    onNoteChanged(
+                        note.copy(
+                            contents = note.contents.toMutableList().apply {
+                                this[contentIdx] = content.copy(datetime = it)
+                            }
+                        )
+                    )
+                }
+            )
+        }
+
+        is NoteContent.KeyCombination -> {
+            NoteContentKeyCombinationEdit(
+                modifier = modifier,
+                combination = content.combination
+            )
+        }
+
+        is NoteContent.Link -> {
+            NoteContentLinkEdit(
+                modifier = modifier,
+                link = content.url,
+                onLinkChanged = { link ->
+                    onNoteChanged(
+                        note.copy(
+                            contents = note.contents.toMutableList().apply {
+                                this[contentIdx] = content.copy(url = link)
+                            }
+                        )
+                    )
+                }
+            )
+        }
+
+        is NoteContent.Money -> {
+            NoteContentMoneyEdit(
+                modifier = modifier,
+                amount = content.amount,
+                unit = MoneyUnit.K
+            )
+        }
     }
 }
 
@@ -224,6 +288,7 @@ private fun NoteItemEditBottomButtons(
     ) {
         notePresentationList.forEachIndexed { idx, presentation ->
             EditActionButton(
+                modifier = Modifier.padding(top = dimensionResource(R.dimen.small)),
                 onClick = { onTypeIdClicked(idx) },
                 iconId = presentation.iconId,
                 text = presentation.text
@@ -236,7 +301,9 @@ private fun NoteItemEditBottomButtons(
 @Composable
 private fun NoteItemEditTopButtons(
     modifier: Modifier = Modifier,
+    onUndo: () -> Unit,
     onCancelled: () -> Unit,
+    onDelete: () -> Unit,
     onDone: () -> Unit,
 ) {
     Row(
@@ -244,13 +311,25 @@ private fun NoteItemEditTopButtons(
         verticalAlignment = Alignment.CenterVertically
     ) {
         EditActionButton(
+            onClick = onUndo,
+            iconId = R.drawable.ic_undo,
+            text = stringResource(R.string.undo),
+        )
+        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+        EditActionButton(
             onClick = onCancelled,
             iconId = R.drawable.ic_cancel,
             text = stringResource(R.string.cancel),
+        )
+        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+        EditActionButton(
+            onClick = onDelete,
+            iconId = R.drawable.ic_delete,
+            text = stringResource(R.string.delete),
             iconTint = MaterialTheme.colorScheme.error,
             containerColor = MaterialTheme.colorScheme.errorContainer
         )
-        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.very_tiny)))
+        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
         EditActionButton(
             onClick = onDone,
             iconId = R.drawable.ic_done,
@@ -275,9 +354,7 @@ private fun EditActionButton(
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
 ) {
     Card(
-        modifier = modifier.padding(
-            top = dimensionResource(R.dimen.small)
-        ),
+        modifier = modifier,
         colors = CardDefaults.cardColors(
             containerColor = containerColor
         ),
@@ -313,19 +390,12 @@ private fun NoteTitleEdit(
     title: String,
     onTitleChanged: (String) -> Unit
 ) {
-    BasicTextField(
+    CustomTextField(
         modifier = modifier,
         value = title,
-        onValueChange = onTitleChanged,
+        onValueChanged = onTitleChanged,
         textStyle = MaterialTheme.typography.titleLarge,
-        decorationBox = { innerTextField ->
-            if (title.isEmpty()) {
-                Text(
-                    text = "Nhập tiêu đề",
-                    style = MaterialTheme.typography.titleLarge.copy(color = Color.Gray))
-            }
-            innerTextField()
-        }
+        placeholder = stringResource(R.string.title_placeholder)
     )
 
 }
@@ -337,11 +407,12 @@ private fun NoteContentTextEdit(
     text: String,
     onTextChanged: (String) -> Unit
 ) {
-    BasicTextField(
+    CustomTextField(
         modifier = modifier,
         value = text,
-        onValueChange = onTextChanged,
-        textStyle = MaterialTheme.typography.bodyLarge
+        onValueChanged = onTextChanged,
+        textStyle = MaterialTheme.typography.bodyLarge,
+        placeholder = stringResource(R.string.text_placeholder)
     )
 }
 
@@ -497,10 +568,10 @@ private fun NoteContentLinkEdit(
     link: String,
     onLinkChanged: (String) -> Unit
 ) {
-    BasicTextField(
+    CustomTextField(
         modifier = modifier,
         value = link,
-        onValueChange = onLinkChanged,
+        onValueChanged = onLinkChanged,
         textStyle = TextStyle(
             color = if (isSystemInDarkTheme()) {
                 colorResource(R.color.link_on_dark)
@@ -562,12 +633,22 @@ private fun NoteContentMoneyEdit(
 private fun Preview() {
     QuickNoteTheme {
         NoteItemEdit(
-            note = Note(title = "Title"),
+            note = Note(
+                title = "Title",
+                contents = listOf(
+                    NoteContent.Text("This is a very long text so that it shows how the text wraps around the screen"),
+                    NoteContent.Datetime(LocalDate.now()),
+                    NoteContent.Link("https://www.google.com"),
+                    NoteContent.KeyCombination(listOf(Key.KeyText("Ctrl"))),
+                    NoteContent.Money(1000u)
+                )
+            ),
             noteIdx = 0,
-            contentIdxToFocus = 0,
             onNoteContentAdded = {_, _ -> },
             notePresentationList = NoteContentPresentation.allTypes,
             onNoteChanged = {_, _ ->},
+            onNoteEditingUndo = {},
+            onNoteEditingDelete = {},
             onNoteEditingCancel = {},
             onNoteEditingDone = {}
         )

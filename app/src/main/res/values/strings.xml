@@ -15,4 +15,9 @@
     <string name="cancel">Hủy</string>
 
     <string name="unable_to_open_link">Không thể mở liên kết</string>
+
+    <string name="title_placeholder">Nhập tiêu đề</string>
+    <string name="text_placeholder">Nhập ghi chú</string>
+    <string name="delete">Xóa</string>
+    <string name="undo">Quay lại</string>
 </resources>

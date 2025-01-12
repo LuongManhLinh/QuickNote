@@ -2,6 +2,7 @@ package com.example.quicknote.ui.mainscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.data.entity.NoteContentPresentation
@@ -37,14 +38,16 @@ class MainScreenViewModel(
     }
 
     fun addEditingNote() {
-        val newNoteUI = NoteUIState(
-            Note(),
-            isEditing = true
-        )
-        _uiState.update {
-            it.copy(
-                noteUIList = it.noteUIList + newNoteUI
+        viewModelScope.launch {
+            val newNoteUI = NoteUIState(
+                Note(),
+                isEditing = true
             )
+            _uiState.update {
+                it.copy(
+                    noteUIList = it.noteUIList + newNoteUI
+                )
+            }
         }
     }
 
@@ -74,17 +77,6 @@ class MainScreenViewModel(
                 noteUIList = state.noteUIList.filterIndexed { idx, _ -> idx != noteIdx }
             )
         }
-    }
-
-    fun deleteLastNote() {
-        viewModelScope.launch {
-            val notes = uiState.value.noteUIList
-            if (notes.isNotEmpty()) {
-                repository.delete(notes.last().note)
-                loadNotes()
-            }
-        }
-
     }
 
     fun onNoteChanged(note: Note, noteIdx: Int) {
@@ -118,9 +110,22 @@ class MainScreenViewModel(
                         val noteContents = noteUIState.note.contents.toMutableList()
                         noteContents.add(content)
                         noteUIState.copy(
-                            note = noteUIState.note.copy(contents = noteContents),
-                            contentIdxToFocus = noteContents.size - 1
+                            note = noteUIState.note.copy(contents = noteContents)
                         )
+                    } else {
+                        noteUIState
+                    }
+                }
+            )
+        }
+    }
+
+    fun onNoteChangeStateToEditing(noteIdx: Int) {
+        _uiState.update {
+            it.copy(
+                noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
+                    if (idx == noteIdx) {
+                        noteUIState.copy(isEditing = true)
                     } else {
                         noteUIState
                     }
@@ -149,7 +154,6 @@ data class MainScreenUIState(
 data class NoteUIState(
     val note: Note,
     val isEditing: Boolean = false,
-    val contentIdxToFocus: Int = -1
 )
 
 enum class MoneyUnit {

@@ -45,6 +45,7 @@ internal fun NoteItem(
     note: Note
 ) {
     val context = LocalContext.current
+    
     Card(modifier = modifier) {
         Column(
             modifier = Modifier
@@ -105,8 +106,6 @@ internal fun NoteItem(
                             unit = MoneyUnit.K
                         )
                     }
-
-
                 }
             }
         }
