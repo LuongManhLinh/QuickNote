@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
@@ -15,19 +16,26 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.quicknote.R
@@ -42,73 +50,103 @@ import java.util.Locale
 @Composable
 internal fun NoteItem(
     modifier: Modifier = Modifier,
-    note: Note
+    note: Note,
+    isSelectingNote: Boolean = false,
+    isSelected: Boolean = false,
+    onSelectionChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
-    
-    Card(modifier = modifier) {
-        Column(
-            modifier = Modifier
-                .padding(dimensionResource(R.dimen.small)),
-            verticalArrangement = Arrangement.Center,
+
+    Card(
+        modifier = modifier
+            .then(
+                if (isSelectingNote) {
+                    Modifier.clickable {
+                        onSelectionChanged(!isSelected)
+                    }
+                } else {
+                    Modifier
+                }
+            ),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            NoteTitle(
-                title = note.title
-            )
-            note.contents.forEach { content ->
-                HorizontalDivider(Modifier.padding(vertical = dimensionResource(R.dimen.small)))
-
-                when (content) {
-                    is NoteContent.Text -> {
-                        NoteContentText(
-                            text = content.text
-                        )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(dimensionResource(R.dimen.small)),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                NoteTitle(
+                    title = note.title.ifEmpty {
+                        stringResource(R.string.untitled)
                     }
+                )
+                note.contents.forEach { content ->
+                    HorizontalDivider(Modifier.padding(vertical = dimensionResource(R.dimen.small)))
 
-                    is NoteContent.Datetime -> {
-                        NoteContentDatetime(
-                            datetime = content.datetime
-                        )
-                    }
-
-                    is NoteContent.KeyCombination -> {
-                        NoteContentKeyCombination(
-                            combination = content.combination
-                        )
-                    }
-
-                    is NoteContent.Link -> {
-                        NoteContentLink(
-                            link = content.url,
-                            onLinkClicked = { link ->
-                                try {
-                                    val validLink = if (link.startsWith("http://")
-                                        || link.startsWith("https://"))
-                                    {
-                                        link
-                                    } else {
-                                        "https://$link"
-                                    }
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
-                                    context.startActivity(intent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(
-                                        context, "Không thể mở liên kết", Toast.LENGTH_SHORT
-                                    ).show()
+                    when (content) {
+                        is NoteContent.Text -> {
+                            NoteContentText(
+                                text = content.text.ifEmpty {
+                                    stringResource(R.string.empty_text)
                                 }
-                            }
-                        )
-                    }
+                            )
+                        }
 
-                    is NoteContent.Money -> {
-                        NoteContentMoney(
-                            amount = content.amount,
-                            unit = MoneyUnit.K
-                        )
+                        is NoteContent.Datetime -> {
+                            NoteContentDatetime(
+                                datetime = content.datetime
+                            )
+                        }
+
+                        is NoteContent.KeyCombination -> {
+                            NoteContentKeyCombination(
+                                combination = content.combination
+                            )
+                        }
+
+                        is NoteContent.Link -> {
+                            NoteContentLink(
+                                link = content.url,
+                                onLinkClicked = { link ->
+                                    try {
+                                        val validLink = if (link.startsWith("http://")
+                                            || link.startsWith("https://"))
+                                        {
+                                            link
+                                        } else {
+                                            "https://$link"
+                                        }
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
+                                        context.startActivity(intent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            context, "Không thể mở liên kết", Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            )
+                        }
+
+                        is NoteContent.Money -> {
+                            NoteContentMoney(
+                                amount = content.amount,
+                            )
+                        }
                     }
                 }
             }
+
+            if (isSelectingNote) {
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = onSelectionChanged
+                )
+            }
         }
+
     }
 }
 
@@ -136,7 +174,8 @@ private fun NoteContentText(
     Text(
         modifier = modifier,
         text = text,
-        style = MaterialTheme.typography.bodyLarge
+        style = MaterialTheme.typography.bodyLarge,
+        textAlign = TextAlign.Justify
     )
 }
 
@@ -146,30 +185,38 @@ private fun NoteContentDatetime(
     modifier: Modifier = Modifier,
     datetime: LocalDate
 ) {
+    var showSpecial by rememberSaveable { mutableStateOf(false) }
+
     val today = LocalDate.now()
-    val dateToShow = when (datetime) {
-        today -> {
-            stringResource(R.string.today)
-        }
-        today.minusDays(1) -> {
-            stringResource(R.string.yesterday)
-        }
-        today.plusDays(1) -> {
-            stringResource(R.string.tomorrow)
-        }
-        in today.plusDays(2)..today.plusDays(7) -> {
-            stringResource(R.string.n_day_after, today.until(datetime).days)
-        }
-        in today.minusDays(7)..today.minusDays(2) -> {
-            stringResource(R.string.n_day_before, datetime.until(today).days)
-        }
-        else -> {
-            datetime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+    val dateToShow = if (showSpecial) {
+        datetime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+    } else {
+        when (datetime) {
+            today -> {
+                stringResource(R.string.today)
+            }
+            today.minusDays(1) -> {
+                stringResource(R.string.yesterday)
+            }
+            today.plusDays(1) -> {
+                stringResource(R.string.tomorrow)
+            }
+            in today.plusDays(2)..today.plusDays(7) -> {
+                stringResource(R.string.n_day_after, today.until(datetime).days)
+            }
+            in today.minusDays(7)..today.minusDays(2) -> {
+                stringResource(R.string.n_day_before, datetime.until(today).days)
+            }
+            else -> {
+                datetime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+            }
         }
     }
 
     Text(
-        modifier = modifier,
+        modifier = modifier.clickable {
+            showSpecial = !showSpecial
+        },
         text = dateToShow,
         style = MaterialTheme.typography.bodyLarge
     )
@@ -250,19 +297,32 @@ private fun NoteContentLink(
     link: String,
     onLinkClicked: (String) -> Unit
 ) {
+    val isLinkEmpty = link.isEmpty()
     Text(
         modifier = modifier
             .clickable {
                 onLinkClicked(link)
             },
-        text = link,
-        style = MaterialTheme.typography.bodyLarge,
-        color = if (isSystemInDarkTheme()) {
-            colorResource(R.color.link_on_dark)
+        text = if (isLinkEmpty) {
+            stringResource(R.string.empty_link)
         } else {
-            colorResource(R.color.link_on_light)
+            link
         },
-        textDecoration = TextDecoration.Underline
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (isLinkEmpty) {
+            Color.Unspecified
+        } else {
+            if (isSystemInDarkTheme()) {
+                colorResource(R.color.link_on_dark)
+            } else {
+                colorResource(R.color.link_on_light)
+            }
+        },
+        textDecoration = if (isLinkEmpty) {
+            TextDecoration.None
+        } else {
+            TextDecoration.Underline
+        }
     )
 }
 
@@ -272,8 +332,9 @@ private fun NoteContentLink(
 private fun NoteContentMoney(
     modifier: Modifier = Modifier,
     amount: ULong,
-    unit: MoneyUnit
 ) {
+    var unit by rememberSaveable { mutableStateOf(MoneyUnit.K) }
+
     val amountString: String
     val unitString: String
     when (unit) {
@@ -302,7 +363,13 @@ private fun NoteContentMoney(
     }
 
     Text(
-        modifier = modifier,
+        modifier = modifier.clickable {
+            unit = when (unit) {
+                MoneyUnit.UNIT -> MoneyUnit.K
+                MoneyUnit.K -> MoneyUnit.M
+                MoneyUnit.M -> MoneyUnit.UNIT
+            }
+        },
         text = "$amountString $unitString",
         style = MaterialTheme.typography.bodyLarge
     )
@@ -319,7 +386,7 @@ private fun TextPreview() {
                 title = "Text",
                 contents = listOf(
                     NoteContent.Text("Hello"),
-                    NoteContent.Text("World")
+                    NoteContent.Text("Khi đến Ả Rập, anh ký hợp đồng trị giá 100 triệu euro mỗi năm. Một phần tiền lương của anh được đầu tư để mua một câu lạc bộ hạng ba ở Bỉ. Ngoài ra, anh còn quay lại khoác áo đội tuyển quốc gia để tham dự Euro. Hiện tại, anh là một trong những trụ cột của Al Ittihad – đội bóng đang dẫn đầu giải VĐQG Ả Rập và đã lọt vào bán kết Cúp Nhà vua Ả Rập.")
                 )
             )
         )
@@ -384,7 +451,11 @@ private fun LinkPreview() {
     QuickNoteTheme {
         NoteItem(
             note = Note(title = "Link",
-                contents = listOf(NoteContent.Link("https://www.google.com")))
+                contents = listOf(
+                    NoteContent.Link("https://www.google.com"),
+                    NoteContent.Link(""),
+                )
+            )
         )
     }
 }

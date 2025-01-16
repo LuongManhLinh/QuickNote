@@ -1,6 +1,8 @@
 package com.example.quicknote.ui.mainscreen
 
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContentPresentation
+import kotlinx.coroutines.coroutineScope
 
 @Composable
 internal fun NoteList(
@@ -25,9 +28,12 @@ internal fun NoteList(
     notePresentationList: List<NoteContentPresentation>,
     onNoteChanged: (Note, Int) -> Unit,
     onNoteContentAdded: (Int, Int) -> Unit,
+    onNoteEditingUndo: (Int) -> Unit,
     onNoteEditingCancel: (Int) -> Unit,
+    onNoteEditingDelete: (Int) -> Unit,
     onNoteEditingDone: (Int) -> Unit,
-    onNoteLongPress: (Int) -> Unit
+    onNoteLongPress: (Int) -> Unit,
+    onDoubleTap: (Int) -> Unit
 ) {
     LazyColumn(
         modifier = modifier,
@@ -45,9 +51,9 @@ internal fun NoteList(
                     onNoteChanged = onNoteChanged,
                     notePresentationList = notePresentationList,
                     onNoteContentAdded = onNoteContentAdded,
-                    onNoteEditingUndo = {},
+                    onNoteEditingUndo = onNoteEditingUndo,
                     onNoteEditingCancel = onNoteEditingCancel,
-                    onNoteEditingDelete = {},
+                    onNoteEditingDelete = onNoteEditingDelete,
                     onNoteEditingDone = onNoteEditingDone
                 )
             } else {
@@ -57,10 +63,12 @@ internal fun NoteList(
                         .padding(dimensionResource(R.dimen.small))
                         .pointerInput(Unit) {
                             detectTapGestures(
-                                onLongPress = { onNoteLongPress(idx) }
+                                onLongPress = { onNoteLongPress(idx) },
+                                onDoubleTap = { onDoubleTap(idx) }
                             )
                         },
-                    note = noteUI.note
+                    note = noteUI.note,
+                    isSelectingNote = false
                 )
             }
         }
@@ -69,7 +77,7 @@ internal fun NoteList(
             val screenHeight = LocalConfiguration.current.screenHeightDp
             Spacer(
                 modifier = Modifier
-                    .height(screenHeight.dp / 2)
+                    .height(screenHeight.dp / 3)
             )
         }
     }

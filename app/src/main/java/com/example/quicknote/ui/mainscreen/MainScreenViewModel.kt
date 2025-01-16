@@ -2,7 +2,6 @@ package com.example.quicknote.ui.mainscreen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.data.entity.NoteContentPresentation
@@ -19,6 +18,8 @@ class MainScreenViewModel(
 ): ViewModel() {
     private val _uiState = MutableStateFlow(MainScreenUIState())
     val uiState = _uiState.asStateFlow()
+
+    private val noteEditingStack = mutableListOf<Note>()
 
     init {
         loadNotes()
@@ -43,6 +44,9 @@ class MainScreenViewModel(
                 Note(),
                 isEditing = true
             )
+
+            noteEditingStack.add(newNoteUI.note)
+
             _uiState.update {
                 it.copy(
                     noteUIList = it.noteUIList + newNoteUI
@@ -51,35 +55,9 @@ class MainScreenViewModel(
         }
     }
 
-    fun onNoteEditingDone(noteIdx: Int) {
-        val note = uiState.value.noteUIList[noteIdx].note
-
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.insert(note)
-        }
-
-        _uiState.update {
-            it.copy(
-                noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
-                    if (idx == noteIdx) {
-                        noteUIState.copy(isEditing = false)
-                    } else {
-                        noteUIState
-                    }
-                }
-            )
-        }
-    }
-
-    fun onNoteEditingCancel(noteIdx: Int) {
-        _uiState.update { state ->
-            state.copy(
-                noteUIList = state.noteUIList.filterIndexed { idx, _ -> idx != noteIdx }
-            )
-        }
-    }
-
     fun onNoteChanged(note: Note, noteIdx: Int) {
+        noteEditingStack.add(_uiState.value.noteUIList[noteIdx].note)
+
         _uiState.update {
             it.copy(
                 noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
@@ -94,6 +72,8 @@ class MainScreenViewModel(
     }
 
     fun onNoteContentAdded(noteIdx: Int, typeId: Int) {
+        noteEditingStack.add(_uiState.value.noteUIList[noteIdx].note)
+
         val content = when (typeId) {
             0 -> NoteContent.Text("")
             1 -> NoteContent.Money(0u)
@@ -121,11 +101,39 @@ class MainScreenViewModel(
     }
 
     fun onNoteChangeStateToEditing(noteIdx: Int) {
+        noteEditingStack.add(_uiState.value.noteUIList[noteIdx].note)
+
         _uiState.update {
             it.copy(
                 noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
                     if (idx == noteIdx) {
                         noteUIState.copy(isEditing = true)
+                    } else {
+                        if (noteUIState.isEditing) {
+                            onNoteEditingDone(idx)
+                            noteUIState.copy(isEditing = false)
+                        } else {
+                            noteUIState
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    fun onNoteEditingDone(noteIdx: Int) {
+        noteEditingStack.clear()
+        val note = _uiState.value.noteUIList[noteIdx].note
+
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.insert(note)
+        }
+
+        _uiState.update {
+            it.copy(
+                noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
+                    if (idx == noteIdx) {
+                        noteUIState.copy(isEditing = false)
                     } else {
                         noteUIState
                     }
@@ -133,10 +141,115 @@ class MainScreenViewModel(
             )
         }
     }
+
+    fun onNoteEditingCancel(noteIdx: Int) {
+        noteEditingStack.clear()
+
+        _uiState.update {
+            it.copy(
+                noteUIList = it.noteUIList.mapIndexed { index, noteUIState ->
+                    if (index == noteIdx) {
+                        noteUIState.copy(isEditing = false)
+                    } else {
+                        noteUIState
+                    }
+                }
+            )
+        }
+    }
+
+    fun onNoteEditingUndo(noteIdx: Int) {
+        if (noteEditingStack.isNotEmpty()) {
+            val note = noteEditingStack.removeAt(noteEditingStack.size - 1)
+            _uiState.update {
+                it.copy(
+                    noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
+                        if (idx == noteIdx) {
+                            noteUIState.copy(note = note)
+                        } else {
+                            noteUIState
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    fun onNoteEditingDelete(noteIdx: Int) {
+        noteEditingStack.clear()
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.delete(_uiState.value.noteUIList[noteIdx].note)
+            _uiState.update {
+                it.copy(
+                    noteUIList = it.noteUIList.filterIndexed { idx, _ -> idx != noteIdx }
+                )
+            }
+        }
+    }
+
+    fun startSelectingNote() {
+        _uiState.update {
+            it.copy(
+                isSelectingNote = true
+            )
+        }
+    }
+
+    fun stopSelectingNote() {
+        _uiState.update { state ->
+            state.copy(
+                isSelectingNote = false,
+                noteUIList = state.noteUIList.map { it.copy(isSelected = false) }
+            )
+        }
+    }
+
+    fun selectNote(noteIdx: Int, isSelected: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                noteUIList = state.noteUIList.mapIndexed { idx, noteUIState ->
+                    if (idx == noteIdx) {
+                        noteUIState.copy(isSelected = isSelected)
+                    } else {
+                        noteUIState
+                    }
+                },
+                isAllSelected = state.noteUIList.all { it.isSelected }
+            )
+        }
+    }
+
+    fun deleteSelectedNotes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.value.noteUIList.forEach {
+                if (it.isSelected) {
+                    repository.delete(it.note)
+                }
+            }
+
+            _uiState.update { state ->
+                state.copy(
+                    noteUIList = state.noteUIList.filter { !it.isSelected }
+                )
+            }
+        }
+    }
+
+
+    fun selectAllNotes(isSelected: Boolean) {
+        _uiState.update { state ->
+            state.copy(
+                noteUIList = state.noteUIList.map { it.copy(isSelected = isSelected) },
+                isAllSelected = isSelected
+            )
+        }
+    }
 }
 
 data class MainScreenUIState(
-    val noteUIList: List<NoteUIState> = emptyList()
+    val noteUIList: List<NoteUIState> = emptyList(),
+    val isSelectingNote: Boolean = false,
+    val isAllSelected: Boolean = false
 ) {
     companion object {
         fun fromNoteList(notes: List<Note>): MainScreenUIState {
@@ -154,6 +267,7 @@ data class MainScreenUIState(
 data class NoteUIState(
     val note: Note,
     val isEditing: Boolean = false,
+    val isSelected: Boolean = false,
 )
 
 enum class MoneyUnit {

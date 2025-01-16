@@ -6,11 +6,14 @@ import kotlinx.serialization.json.Json
 
 @Serializable
 data class Note(
-    var title: String = "",
-    var contents: List<NoteContent> = emptyList()
+    val title: String = "",
+    val contents: List<NoteContent> = emptyList()
 ) {
-    fun toEntity(): NoteEntity {
+    var noteId = 0L
+
+    fun toNoteEntity(): NoteEntity {
         return NoteEntity(
+            id = noteId,
             noteAsJson = Json.encodeToString(this)
         )
     }

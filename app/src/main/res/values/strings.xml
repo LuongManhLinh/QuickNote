@@ -18,6 +18,14 @@
 
     <string name="title_placeholder">Nhập tiêu đề</string>
     <string name="text_placeholder">Nhập ghi chú</string>
+    <string name="link_placeholder">Nhập liên kết</string>
+
     <string name="delete">Xóa</string>
     <string name="undo">Quay lại</string>
+
+    <string name="untitled">Chưa có tiêu đề</string>
+    <string name="empty_text">Ghi chú trống</string>
+    <string name="empty_link">Liên kết trống</string>
+    <string name="no_note">Chưa có ghi chú nào</string>
+    <string name="select_all">Chọn tất cả</string>
 </resources>

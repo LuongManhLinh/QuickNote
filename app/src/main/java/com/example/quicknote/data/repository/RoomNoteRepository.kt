@@ -11,15 +11,15 @@ class RoomNoteRepository(
     }
 
     override suspend fun insert(note: Note) {
-        noteDao.insert(note.toEntity())
+        noteDao.insert(note.toNoteEntity())
     }
 
     override suspend fun update(note: Note) {
-        noteDao.update(note.toEntity())
+        noteDao.update(note.toNoteEntity())
     }
 
     override suspend fun delete(note: Note) {
-        noteDao.delete(note.toEntity())
+        noteDao.delete(note.toNoteEntity())
     }
 
 }

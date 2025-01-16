@@ -17,10 +17,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -269,7 +270,16 @@ private fun NoteItemEditMainContent(
             NoteContentMoneyEdit(
                 modifier = modifier,
                 amount = content.amount,
-                unit = MoneyUnit.K
+                unit = MoneyUnit.K,
+                onMoneyChanged = { amount ->
+                    onNoteChanged(
+                        note.copy(
+                            contents = note.contents.toMutableList().apply {
+                                this[contentIdx] = content.copy(amount = amount)
+                            }
+                        )
+                    )
+                }
             )
         }
     }
@@ -284,7 +294,8 @@ private fun NoteItemEditBottomButtons(
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceAround
+
     ) {
         notePresentationList.forEachIndexed { idx, presentation ->
             EditActionButton(
@@ -572,6 +583,7 @@ private fun NoteContentLinkEdit(
         modifier = modifier,
         value = link,
         onValueChanged = onLinkChanged,
+        placeholder = stringResource(R.string.link_placeholder),
         textStyle = TextStyle(
             color = if (isSystemInDarkTheme()) {
                 colorResource(R.color.link_on_dark)
@@ -591,8 +603,10 @@ private fun NoteContentLinkEdit(
 private fun NoteContentMoneyEdit(
     modifier: Modifier = Modifier,
     amount: ULong,
-    unit: MoneyUnit
+    unit: MoneyUnit,
+    onMoneyChanged: (ULong) -> Unit,
 ) {
+    var openDialog by remember { mutableStateOf(false) }
     val amountString: String
     val unitString: String
     when (unit) {
@@ -620,11 +634,47 @@ private fun NoteContentMoneyEdit(
         }
     }
 
-    Text(
+    Row(
         modifier = modifier,
-        text = "$amountString $unitString",
-        style = MaterialTheme.typography.bodyLarge
-    )
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            modifier = modifier,
+            text = "$amountString $unitString",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Icon(
+            modifier = Modifier.clickable { openDialog = true },
+            imageVector = Icons.Default.Add,
+            contentDescription = null
+        )
+        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+        Icon(
+            modifier = Modifier.clickable { },
+            imageVector = Icons.Default.Remove,
+            contentDescription = null
+        )
+        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+    }
+
+    if (openDialog) {
+        NoteItemEditMoneyDialog(
+            title = "Title",
+            currentMoney = amount,
+            value = amountString,
+            onValueChanged = {
+                val value = if (it.isEmpty()) {
+                    0u
+                } else {
+                    it.toULong()
+                }
+
+                onMoneyChanged(value)
+            },
+            isAdding = true,
+            onDismissRequest = { openDialog = false }
+        )
+    }
 }
 
 
@@ -640,7 +690,7 @@ private fun Preview() {
                     NoteContent.Datetime(LocalDate.now()),
                     NoteContent.Link("https://www.google.com"),
                     NoteContent.KeyCombination(listOf(Key.KeyText("Ctrl"))),
-                    NoteContent.Money(1000u)
+                    NoteContent.Money(10000000000000000000u)
                 )
             ),
             noteIdx = 0,
