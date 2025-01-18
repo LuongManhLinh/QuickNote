@@ -2,6 +2,7 @@ package com.example.quicknote.ui.mainscreen
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -43,6 +44,7 @@ import com.example.quicknote.data.entity.Key
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.ui.theme.QuickNoteTheme
+import com.example.quicknote.util.formatNumberWithComma
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -333,44 +335,11 @@ private fun NoteContentMoney(
     modifier: Modifier = Modifier,
     amount: ULong,
 ) {
-    var unit by rememberSaveable { mutableStateOf(MoneyUnit.K) }
-
-    val amountString: String
-    val unitString: String
-    when (unit) {
-        MoneyUnit.UNIT -> {
-            amountString = amount.toString()
-            unitString = stringResource(R.string.money_UNIT)
-        }
-        MoneyUnit.K -> {
-            amountString = if ((amount % 1000u).toUInt() == 0u) {
-                (amount / 1000u).toString()
-            } else {
-                String
-                    .format(Locale.getDefault(), "%.2f", amount.toFloat() / 1000)
-            }
-            unitString = stringResource(R.string.money_K)
-        }
-        MoneyUnit.M -> {
-            amountString = if ((amount % 1000000u).toUInt() == 0u) {
-                (amount / 1000000u).toString()
-            } else {
-                String
-                    .format(Locale.getDefault(), "%.2f", amount.toFloat() / 1000000)
-            }
-            unitString = stringResource(R.string.money_M)
-        }
-    }
-
+    val showString = formatNumberWithComma(amount)
+    Log.e("NoteItem", "showString: $showString")
     Text(
-        modifier = modifier.clickable {
-            unit = when (unit) {
-                MoneyUnit.UNIT -> MoneyUnit.K
-                MoneyUnit.K -> MoneyUnit.M
-                MoneyUnit.M -> MoneyUnit.UNIT
-            }
-        },
-        text = "$amountString $unitString",
+        modifier = modifier,
+        text = "$showString ${stringResource(R.string.money_UNIT)}",
         style = MaterialTheme.typography.bodyLarge
     )
 }

@@ -175,18 +175,6 @@ class MainScreenViewModel(
         }
     }
 
-    fun onNoteEditingDelete(noteIdx: Int) {
-        noteEditingStack.clear()
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.delete(_uiState.value.noteUIList[noteIdx].note)
-            _uiState.update {
-                it.copy(
-                    noteUIList = it.noteUIList.filterIndexed { idx, _ -> idx != noteIdx }
-                )
-            }
-        }
-    }
-
     fun startSelectingNote() {
         _uiState.update {
             it.copy(
@@ -270,8 +258,3 @@ data class NoteUIState(
     val isSelected: Boolean = false,
 )
 
-enum class MoneyUnit {
-    UNIT,
-    K,
-    M,
-}

@@ -1,7 +1,5 @@
 package com.example.quicknote.data.entity
 
-import androidx.annotation.DrawableRes
-import com.example.quicknote.R
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
 

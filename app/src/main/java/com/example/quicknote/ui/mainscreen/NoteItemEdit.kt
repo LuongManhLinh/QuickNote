@@ -1,6 +1,7 @@
 package com.example.quicknote.ui.mainscreen
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -35,8 +38,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,15 +52,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.text.isDigitsOnly
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Key
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.data.entity.NoteContentPresentation
+import com.example.quicknote.ui.custom.CustomMoneyTextField
 import com.example.quicknote.ui.custom.CustomTextField
 import com.example.quicknote.ui.theme.QuickNoteTheme
+import com.example.quicknote.util.formatNumberWithComma
+import com.example.quicknote.util.removeCommaFromNumber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -70,7 +81,6 @@ internal fun NoteItemEdit(
     onNoteContentAdded: (Int, Int) -> Unit,
     onNoteEditingUndo: (Int) -> Unit,
     onNoteEditingCancel: (Int) -> Unit,
-    onNoteEditingDelete: (Int) -> Unit,
     onNoteEditingDone: (Int) -> Unit,
 ) {
     Column(
@@ -82,7 +92,6 @@ internal fun NoteItemEdit(
                 .padding(bottom = dimensionResource(R.dimen.small)),
             onUndo = { onNoteEditingUndo(noteIdx) },
             onCancelled = { onNoteEditingCancel(noteIdx) },
-            onDelete = { onNoteEditingDelete(noteIdx) },
             onDone = { onNoteEditingDone(noteIdx) }
         )
         NoteItemEditContent(
@@ -270,7 +279,6 @@ private fun NoteItemEditMainContent(
             NoteContentMoneyEdit(
                 modifier = modifier,
                 amount = content.amount,
-                unit = MoneyUnit.K,
                 onMoneyChanged = { amount ->
                     onNoteChanged(
                         note.copy(
@@ -302,7 +310,7 @@ private fun NoteItemEditBottomButtons(
                 modifier = Modifier.padding(top = dimensionResource(R.dimen.small)),
                 onClick = { onTypeIdClicked(idx) },
                 iconId = presentation.iconId,
-                text = presentation.text
+                textId = presentation.titleId
             )
         }
     }
@@ -314,7 +322,6 @@ private fun NoteItemEditTopButtons(
     modifier: Modifier = Modifier,
     onUndo: () -> Unit,
     onCancelled: () -> Unit,
-    onDelete: () -> Unit,
     onDone: () -> Unit,
 ) {
     Row(
@@ -324,27 +331,19 @@ private fun NoteItemEditTopButtons(
         EditActionButton(
             onClick = onUndo,
             iconId = R.drawable.ic_undo,
-            text = stringResource(R.string.undo),
+            textId = R.string.undo,
         )
         Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
         EditActionButton(
             onClick = onCancelled,
             iconId = R.drawable.ic_cancel,
-            text = stringResource(R.string.cancel),
-        )
-        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
-        EditActionButton(
-            onClick = onDelete,
-            iconId = R.drawable.ic_delete,
-            text = stringResource(R.string.delete),
-            iconTint = MaterialTheme.colorScheme.error,
-            containerColor = MaterialTheme.colorScheme.errorContainer
+            textId = R.string.cancel,
         )
         Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
         EditActionButton(
             onClick = onDone,
             iconId = R.drawable.ic_done,
-            text = stringResource(R.string.done),
+            textId = R.string.done,
             iconTint = if (isSystemInDarkTheme()) {
                 colorResource(R.color.done_on_dark)
             } else {
@@ -360,7 +359,7 @@ private fun EditActionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     @DrawableRes iconId: Int,
-    text: String,
+    @StringRes textId: Int,
     iconTint: Color = Color.Black,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
 ) {
@@ -383,12 +382,12 @@ private fun EditActionButton(
             Icon(
                 modifier = Modifier.size(dimensionResource(R.dimen.normal)),
                 painter = painterResource(iconId),
-                contentDescription = text,
+                contentDescription = stringResource(textId),
                 tint = iconTint
             )
             Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
             Text(
-                text = text,
+                text = stringResource(textId),
                 style = MaterialTheme.typography.bodySmall
             )
         }
@@ -603,54 +602,80 @@ private fun NoteContentLinkEdit(
 private fun NoteContentMoneyEdit(
     modifier: Modifier = Modifier,
     amount: ULong,
-    unit: MoneyUnit,
     onMoneyChanged: (ULong) -> Unit,
 ) {
-    var openDialog by remember { mutableStateOf(false) }
-    val amountString: String
-    val unitString: String
-    when (unit) {
-        MoneyUnit.UNIT -> {
-            amountString = amount.toString()
-            unitString = stringResource(R.string.money_UNIT)
-        }
-        MoneyUnit.K -> {
-            amountString = if ((amount % 1000u).toUInt() == 0u) {
-                (amount / 1000u).toString()
-            } else {
-                String
-                    .format(Locale.getDefault(), "%.2f", amount.toFloat() / 1000)
-            }
-            unitString = stringResource(R.string.money_K)
-        }
-        MoneyUnit.M -> {
-            amountString = if ((amount % 1000000u).toUInt() == 0u) {
-                (amount / 1000000u).toString()
-            } else {
-                String
-                    .format(Locale.getDefault(), "%.2f", amount.toFloat() / 1000000)
-            }
-            unitString = stringResource(R.string.money_M)
-        }
-    }
+
+    var openDialog by rememberSaveable { mutableStateOf(false) }
+    var isAdding by rememberSaveable { mutableStateOf(true) }
+    var changingValue by rememberSaveable { mutableLongStateOf(0L) }
+
 
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        CustomMoneyTextField(
+            modifier = Modifier,
+            value = amount.toString(),
+            onValueChanged = {
+                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
+                    0u
+                } else {
+                    var parsed = it.toULongOrNull()
+                    while (parsed == null) {
+                        parsed = it.dropLast(1).toULongOrNull()
+                    }
+                    parsed
+                }
+
+                onMoneyChanged(value)
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            )
+        )
+//        CustomTextField(
+//            modifier = Modifier,
+//            value = amount.toString(),
+//            onValueChanged = {
+//                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
+//                    0u
+//                } else {
+//                    var parsed = it.toULongOrNull()
+//                    while (parsed == null) {
+//                        parsed = it.dropLast(1).toULongOrNull()
+//                    }
+//                    parsed
+//                }
+//
+//                onMoneyChanged(value)
+//            },
+//            keyboardOptions = KeyboardOptions(
+//                keyboardType = KeyboardType.Number,
+//                imeAction = ImeAction.Done
+//            )
+//        )
+
         Text(
-            modifier = modifier,
-            text = "$amountString $unitString",
+            text = " " + stringResource(R.string.money_UNIT),
             style = MaterialTheme.typography.bodyLarge
         )
+        Spacer(Modifier.weight(1f))
         Icon(
-            modifier = Modifier.clickable { openDialog = true },
+            modifier = Modifier.clickable {
+                openDialog = true
+                isAdding = true
+            },
             imageVector = Icons.Default.Add,
             contentDescription = null
         )
         Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
         Icon(
-            modifier = Modifier.clickable { },
+            modifier = Modifier.clickable {
+                openDialog = true
+                isAdding = false
+            },
             imageVector = Icons.Default.Remove,
             contentDescription = null
         )
@@ -659,19 +684,31 @@ private fun NoteContentMoneyEdit(
 
     if (openDialog) {
         NoteItemEditMoneyDialog(
-            title = "Title",
             currentMoney = amount,
-            value = amountString,
+            value = changingValue.toString(),
             onValueChanged = {
-                val value = if (it.isEmpty()) {
-                    0u
+                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
+                    0L
                 } else {
-                    it.toULong()
+                    var parsed = it.toLongOrNull()
+                    while (parsed == null) {
+                        parsed = it.dropLast(1).toLongOrNull()
+                    }
+                    parsed
                 }
-
-                onMoneyChanged(value)
+                changingValue = value!!
             },
-            isAdding = true,
+            isAdding = isAdding,
+            onDone = {
+                onMoneyChanged(
+                    if (isAdding) {
+                        amount + changingValue.toULong()
+                    } else {
+                        amount - changingValue.toULong()
+                    }
+                )
+                openDialog = false
+            },
             onDismissRequest = { openDialog = false }
         )
     }
@@ -690,7 +727,7 @@ private fun Preview() {
                     NoteContent.Datetime(LocalDate.now()),
                     NoteContent.Link("https://www.google.com"),
                     NoteContent.KeyCombination(listOf(Key.KeyText("Ctrl"))),
-                    NoteContent.Money(10000000000000000000u)
+                    NoteContent.Money(10000u)
                 )
             ),
             noteIdx = 0,
@@ -698,7 +735,6 @@ private fun Preview() {
             notePresentationList = NoteContentPresentation.allTypes,
             onNoteChanged = {_, _ ->},
             onNoteEditingUndo = {},
-            onNoteEditingDelete = {},
             onNoteEditingCancel = {},
             onNoteEditingDone = {}
         )

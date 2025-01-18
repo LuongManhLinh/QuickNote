@@ -1,8 +1,6 @@
 package com.example.quicknote.ui.mainscreen
 
-import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContentPresentation
-import kotlinx.coroutines.coroutineScope
 
 @Composable
 internal fun NoteList(
@@ -30,7 +27,6 @@ internal fun NoteList(
     onNoteContentAdded: (Int, Int) -> Unit,
     onNoteEditingUndo: (Int) -> Unit,
     onNoteEditingCancel: (Int) -> Unit,
-    onNoteEditingDelete: (Int) -> Unit,
     onNoteEditingDone: (Int) -> Unit,
     onNoteLongPress: (Int) -> Unit,
     onDoubleTap: (Int) -> Unit
@@ -53,7 +49,6 @@ internal fun NoteList(
                     onNoteContentAdded = onNoteContentAdded,
                     onNoteEditingUndo = onNoteEditingUndo,
                     onNoteEditingCancel = onNoteEditingCancel,
-                    onNoteEditingDelete = onNoteEditingDelete,
                     onNoteEditingDone = onNoteEditingDone
                 )
             } else {

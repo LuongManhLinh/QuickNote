@@ -1,6 +1,7 @@
 package com.example.quicknote.data.entity
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import com.example.quicknote.R
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -60,20 +61,39 @@ sealed interface Key {
         }
     }
 
+    val specialKeyList: List<Key>
+        get() = listOf(
+            KeyText.CTRL,
+            KeyText.ALT,
+            KeyText.SHIFT,
+            KeyText.TAB,
+            KeyText.ENTER,
+            KeyText.ESC,
+            KeyText.BACKSPACE,
+            KeyText.DELETE,
+            KeyText.FN,
+            KeyText.SPACE,
+            KeySymbol.WINDOW,
+            KeySymbol.ARROW_UP,
+            KeySymbol.ARROW_DOWN,
+            KeySymbol.ARROW_LEFT,
+            KeySymbol.ARROW_RIGHT
+        )
+
 }
 
 
 data class NoteContentPresentation(
     @DrawableRes val iconId: Int,
-    val text: String
+    @StringRes val titleId: Int
 ) {
     companion object {
         val allTypes = listOf(
-            NoteContentPresentation(R.drawable.note_type_text, "Ghi chú thường"),
-            NoteContentPresentation(R.drawable.note_type_money, "Tiền"),
-            NoteContentPresentation(R.drawable.note_type_datetime, "Ngày tháng"),
-            NoteContentPresentation(R.drawable.note_type_link, "Liên kết"),
-            NoteContentPresentation(R.drawable.note_type_key_comb, "Phím tắt")
+            NoteContentPresentation(R.drawable.note_type_text, R.string.note_type_text),
+            NoteContentPresentation(R.drawable.note_type_money, R.string.note_type_money),
+            NoteContentPresentation(R.drawable.note_type_datetime, R.string.note_type_datetime),
+            NoteContentPresentation(R.drawable.note_type_link, R.string.note_type_link),
+            NoteContentPresentation(R.drawable.note_type_key_comb, R.string.note_type_key_comb)
         )
     }
 }

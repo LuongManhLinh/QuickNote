@@ -108,7 +108,6 @@ fun MainScreen(
                     onNoteContentAdded = viewModel::onNoteContentAdded,
                     onNoteEditingUndo = viewModel::onNoteEditingUndo,
                     onNoteEditingCancel = viewModel::onNoteEditingCancel,
-                    onNoteEditingDelete = viewModel::onNoteEditingDelete,
                     onNoteEditingDone = viewModel::onNoteEditingDone,
                     onNoteLongPress = {
                         coroutineScope.launch {
