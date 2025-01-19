@@ -106,8 +106,6 @@ fun MainScreen(
 
                             if (result == SnackbarResult.ActionPerformed) {
                                 viewModel.undoDeleteNotes()
-                            } else if (result == SnackbarResult.Dismissed) {
-                                viewModel.deleteNotesInCache()
                             }
                         }
                     },

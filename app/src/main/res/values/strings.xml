@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">QuickNote</string>
+    <string name="app_name">Ghi Chú</string>
 
     <string name="note">ghi chú</string>
     <string name="note_type_text">Ghi chú thường</string>

@@ -30,7 +30,11 @@ class MainScreenViewModel(
     private fun loadNotes() {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update {
-                MainScreenUIState.fromNoteList(repository.getAll())
+                it.copy(
+                    noteUIList = repository.getAll().map { note ->
+                        NoteUIState(note)
+                    }
+                )
             }
         }
     }
@@ -222,39 +226,45 @@ class MainScreenViewModel(
     }
 
     fun deleteSelectedNotes(): Int {
-        cacheNoteUIList = _uiState.value.noteUIList
+//        cacheNoteUIList = _uiState.value.noteUIList
+//
+//        _uiState.update { state ->
+//            state.copy(
+//                noteUIList = state.noteUIList.filter { !it.isSelected },
+//            )
+//        }
+//
+//        // Return the number of notes that are selected and will be deleted
+//        return cacheNoteUIList!!.count { it.isSelected }
 
-        _uiState.update { state ->
-            state.copy(
-                noteUIList = state.noteUIList.filter { !it.isSelected },
-            )
+        val selectedNotes = _uiState.value.noteUIList.filter { it.isSelected }
+        cacheNoteUIList = selectedNotes
+        viewModelScope.launch(Dispatchers.IO) {
+            selectedNotes.forEach { noteUIState ->
+                repository.delete(noteUIState.note)
+            }
+            loadNotes()
         }
 
-        // Return the number of notes that are selected and will be deleted
-        return cacheNoteUIList!!.count { it.isSelected }
+        return selectedNotes.size
     }
 
     fun undoDeleteNotes() {
-        _uiState.update { state ->
-            state.copy(
-                noteUIList = cacheNoteUIList ?: state.noteUIList,
-            )
-        }
-
-        cacheNoteUIList = null
-    }
-
-    fun deleteNotesInCache() {
+//        _uiState.update { state ->
+//            state.copy(
+//                noteUIList = cacheNoteUIList ?: state.noteUIList,
+//            )
+//        }
+//
+//        cacheNoteUIList = null
         viewModelScope.launch(Dispatchers.IO) {
             cacheNoteUIList?.forEach { noteUIState ->
-                if (noteUIState.isSelected) {
-                    repository.delete(noteUIState.note)
-                }
+                repository.insert(noteUIState.note)
             }
+            loadNotes()
             cacheNoteUIList = null
         }
     }
-
 
     fun selectAllNotes(isSelected: Boolean) {
         _uiState.update { state ->
@@ -270,15 +280,7 @@ data class MainScreenUIState(
     val noteUIList: List<NoteUIState> = emptyList(),
     val isSelectingNote: Boolean = false,
     val isAllSelected: Boolean = false,
-) {
-    companion object {
-        fun fromNoteList(notes: List<Note>): MainScreenUIState {
-            return MainScreenUIState(
-                noteUIList = notes.map { NoteUIState(it) }
-            )
-        }
-    }
-}
+)
 
 data class NoteUIState(
     val note: Note,
