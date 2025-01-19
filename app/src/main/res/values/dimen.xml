@@ -7,6 +7,7 @@
     <dimen name="tiny_small">6.dp</dimen>
     <dimen name="small">8.dp</dimen>
     <dimen name="normal">16.dp</dimen>
+    <dimen name="normal_medium">24.dp</dimen>
     <dimen name="medium">32.dp</dimen>
     <dimen name="large">64.dp</dimen>
 </resources>

@@ -1,4 +1,4 @@
-package com.example.quicknote.ui.mainscreen
+package com.example.quicknote.ui.mainscreen.edit
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +41,8 @@ import com.example.quicknote.ui.theme.QuickNoteTheme
 import com.example.quicknote.util.formatNumberWithComma
 import java.util.Locale
 import com.example.quicknote.data.entity.Key
+import com.example.quicknote.ui.mainscreen.item.KeyCombinationSymbol
+import com.example.quicknote.ui.mainscreen.item.KeyCombinationText
 
 @Composable
 internal fun NoteItemEditMoneyDialog(
@@ -183,6 +185,7 @@ internal fun NoteItemEditKeyCombinationDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         KeyCombinationEditField(
+                            modifier = Modifier.padding(dimensionResource(R.dimen.small)),
                             combination = keyList,
                             onKeyListChange = onKeyListChange
                         )

@@ -2,6 +2,8 @@ package com.example.quicknote.util
 
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 
@@ -21,4 +23,8 @@ fun formatNumberWithComma(number: ULong): String {
 
 fun removeCommaFromNumber(number: String): String {
     return number.replace(",", "")
+}
+
+fun formatDate(date: LocalDate): String {
+    return date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
 }

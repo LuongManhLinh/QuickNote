@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContentPresentation
+import com.example.quicknote.ui.mainscreen.edit.NoteItemEdit
+import com.example.quicknote.ui.mainscreen.item.NoteItem
 
 @Composable
 internal fun NoteList(
@@ -29,7 +31,7 @@ internal fun NoteList(
     onNoteEditingCancel: (Int) -> Unit,
     onNoteEditingDone: (Int) -> Unit,
     onNoteLongPress: (Int) -> Unit,
-    onDoubleTap: (Int) -> Unit
+    onDoubleTap: (Int) -> Unit,
 ) {
     LazyColumn(
         modifier = modifier,

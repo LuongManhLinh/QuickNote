@@ -1,6 +1,5 @@
-package com.example.quicknote.ui.mainscreen
+package com.example.quicknote.ui.mainscreen.edit
 
-import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -15,34 +14,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,23 +32,14 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.text.isDigitsOnly
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Key
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
 import com.example.quicknote.data.entity.NoteContentPresentation
-import com.example.quicknote.ui.custom.CustomMoneyTextField
-import com.example.quicknote.ui.custom.CustomTextField
 import com.example.quicknote.ui.theme.QuickNoteTheme
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Composable
 internal fun NoteItemEdit(
@@ -398,264 +371,6 @@ private fun EditActionButton(
                 style = MaterialTheme.typography.bodySmall
             )
         }
-    }
-}
-
-@Composable
-private fun NoteTitleEdit(
-    modifier: Modifier = Modifier,
-    title: String,
-    onTitleChanged: (String) -> Unit
-) {
-    CustomTextField(
-        modifier = modifier,
-        value = title,
-        onValueChange = onTitleChanged,
-        textStyle = MaterialTheme.typography.titleLarge,
-        placeholder = stringResource(R.string.title_placeholder)
-    )
-
-}
-
-
-@Composable
-private fun NoteContentTextEdit(
-    modifier: Modifier = Modifier,
-    text: String,
-    onTextChanged: (String) -> Unit
-) {
-    CustomTextField(
-        modifier = modifier,
-        value = text,
-        onValueChange = onTextChanged,
-        textStyle = MaterialTheme.typography.bodyLarge,
-        placeholder = stringResource(R.string.text_placeholder)
-    )
-}
-
-
-@Composable
-private fun NoteContentDatetimeEdit(
-    modifier: Modifier = Modifier,
-    datetime: LocalDate,
-    onDatetimeChanged: (LocalDate) -> Unit,
-) {
-    val today = LocalDate.now()
-    val dateToShow = when (datetime) {
-        today -> {
-            stringResource(R.string.today)
-        }
-        today.minusDays(1) -> {
-            stringResource(R.string.yesterday)
-        }
-        today.plusDays(1) -> {
-            stringResource(R.string.tomorrow)
-        }
-        in today.plusDays(2)..today.plusDays(7) -> {
-            stringResource(R.string.n_day_after, today.until(datetime).days)
-        }
-        in today.minusDays(7)..today.minusDays(2) -> {
-            stringResource(R.string.n_day_before, datetime.until(today).days)
-        }
-        else -> {
-            datetime.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-        }
-    }
-
-    var isShowingDatePicker by remember { mutableStateOf(false) }
-
-    Text(
-        modifier = modifier.clickable { isShowingDatePicker = true },
-        text = dateToShow,
-        style = MaterialTheme.typography.bodyLarge
-    )
-
-    if (isShowingDatePicker) {
-        DatePickerModal(
-            onDateMillisSelected = { selectedDateMillis ->
-                if (selectedDateMillis != null) {
-                    onDatetimeChanged(LocalDate.ofEpochDay(selectedDateMillis / 86400000))
-                }
-            },
-            onDismiss = { isShowingDatePicker = false }
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DatePickerModal(
-    onDateMillisSelected: (Long?) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val datePickerState = rememberDatePickerState()
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                onDateMillisSelected(datePickerState.selectedDateMillis)
-                onDismiss()
-            }) {
-                Text(stringResource(R.string.done))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    ) {
-        DatePicker(state = datePickerState)
-    }
-}
-
-
-@Composable
-private fun NoteContentLinkEdit(
-    modifier: Modifier = Modifier,
-    link: String,
-    onLinkChanged: (String) -> Unit
-) {
-    CustomTextField(
-        modifier = modifier,
-        value = link,
-        onValueChange = onLinkChanged,
-        placeholder = stringResource(R.string.link_placeholder),
-        textStyle = TextStyle(
-            color = if (isSystemInDarkTheme()) {
-                colorResource(R.color.link_on_dark)
-            } else {
-                colorResource(R.color.link_on_light)
-            },
-            textDecoration = TextDecoration.Underline,
-            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-            fontWeight = FontWeight.Normal
-        )
-    )
-}
-
-
-@Composable
-private fun NoteContentKeyCombinationEdit(
-    modifier: Modifier = Modifier,
-    combination: List<Key>,
-    onKeyListChange: (List<Key>) -> Unit
-) {
-    var openDialog by rememberSaveable { mutableStateOf(false) }
-    var newKeyList by rememberSaveable { mutableStateOf(combination) }
-
-    NoteContentKeyCombination(
-        modifier = modifier.clickable { openDialog = true },
-        combination = combination,
-    )
-
-    if (openDialog) {
-        NoteItemEditKeyCombinationDialog(
-            keyList = newKeyList,
-            onKeyListChange = { newKeyList = it },
-            onDismissRequest = { openDialog = false },
-            onDone = {
-                onKeyListChange(newKeyList)
-                openDialog = false
-            }
-        )
-    }
-}
-
-
-@Composable
-private fun NoteContentMoneyEdit(
-    modifier: Modifier = Modifier,
-    amount: ULong,
-    onMoneyChanged: (ULong) -> Unit,
-) {
-
-    var openDialog by rememberSaveable { mutableStateOf(false) }
-    var isAdding by rememberSaveable { mutableStateOf(true) }
-    var changingValue by rememberSaveable { mutableLongStateOf(0L) }
-
-
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CustomMoneyTextField(
-            modifier = Modifier,
-            value = amount.toString(),
-            onValueChange = {
-                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
-                    0u
-                } else {
-                    var parsed = it.toULongOrNull()
-                    while (parsed == null) {
-                        parsed = it.dropLast(1).toULongOrNull()
-                    }
-                    parsed
-                }
-
-                onMoneyChanged(value)
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
-        )
-
-        Text(
-            text = " " + stringResource(R.string.money_UNIT),
-            style = MaterialTheme.typography.bodyLarge
-        )
-        Spacer(Modifier.weight(1f))
-        Icon(
-            modifier = Modifier.clickable {
-                openDialog = true
-                isAdding = true
-            },
-            imageVector = Icons.Default.Add,
-            contentDescription = null
-        )
-        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
-        Icon(
-            modifier = Modifier.clickable {
-                openDialog = true
-                isAdding = false
-            },
-            imageVector = Icons.Default.Remove,
-            contentDescription = null
-        )
-        Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
-    }
-
-    if (openDialog) {
-        NoteItemEditMoneyDialog(
-            currentMoney = amount,
-            value = changingValue.toString(),
-            onValueChanged = {
-                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
-                    0L
-                } else {
-                    var parsed = it.toLongOrNull()
-                    while (parsed == null) {
-                        parsed = it.dropLast(1).toLongOrNull()
-                    }
-                    parsed
-                }
-                changingValue = value!!
-            },
-            isAdding = isAdding,
-            onDone = {
-                onMoneyChanged(
-                    if (isAdding) {
-                        amount + changingValue.toULong()
-                    } else {
-                        amount - changingValue.toULong()
-                    }
-                )
-                openDialog = false
-            },
-            onDismissRequest = { openDialog = false }
-        )
     }
 }
 

@@ -1,5 +1,6 @@
 package com.example.quicknote.ui.mainscreen
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.quicknote.data.entity.Note
@@ -20,6 +21,7 @@ class MainScreenViewModel(
     val uiState = _uiState.asStateFlow()
 
     private val noteEditingStack = mutableListOf<Note>()
+    private var cacheNoteUIList: List<NoteUIState>? = null
 
     init {
         loadNotes()
@@ -100,9 +102,7 @@ class MainScreenViewModel(
         }
     }
 
-    fun onNoteChangeStateToEditing(noteIdx: Int) {
-        noteEditingStack.add(_uiState.value.noteUIList[noteIdx].note)
-
+    fun changeNoteStateToEditing(noteIdx: Int) {
         _uiState.update {
             it.copy(
                 noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
@@ -119,6 +119,8 @@ class MainScreenViewModel(
                 }
             )
         }
+
+        noteEditingStack.add(_uiState.value.noteUIList[noteIdx].note)
     }
 
     fun onNoteEditingDone(noteIdx: Int) {
@@ -187,9 +189,10 @@ class MainScreenViewModel(
     }
 
     fun startSelectingNote() {
-        _uiState.update {
-            it.copy(
-                isSelectingNote = true
+        _uiState.update { state ->
+            state.copy(
+                isSelectingNote = true,
+                noteUIList = state.noteUIList.map { it.copy(isSelected = false) }
             )
         }
     }
@@ -198,39 +201,57 @@ class MainScreenViewModel(
         _uiState.update { state ->
             state.copy(
                 isSelectingNote = false,
-                noteUIList = state.noteUIList.map { it.copy(isSelected = false) }
             )
         }
     }
 
     fun selectNote(noteIdx: Int, isSelected: Boolean) {
         _uiState.update { state ->
+            val newNoteUIList = state.noteUIList.mapIndexed { idx, noteUIState ->
+                if (idx == noteIdx) {
+                    noteUIState.copy(isSelected = isSelected)
+                } else {
+                    noteUIState
+                }
+            }
             state.copy(
-                noteUIList = state.noteUIList.mapIndexed { idx, noteUIState ->
-                    if (idx == noteIdx) {
-                        noteUIState.copy(isSelected = isSelected)
-                    } else {
-                        noteUIState
-                    }
-                },
-                isAllSelected = state.noteUIList.all { it.isSelected }
+                noteUIList = newNoteUIList,
+                isAllSelected = newNoteUIList.all { it.isSelected }
             )
         }
     }
 
-    fun deleteSelectedNotes() {
+    fun deleteSelectedNotes(): Int {
+        cacheNoteUIList = _uiState.value.noteUIList
+
+        _uiState.update { state ->
+            state.copy(
+                noteUIList = state.noteUIList.filter { !it.isSelected },
+            )
+        }
+
+        // Return the number of notes that are selected and will be deleted
+        return cacheNoteUIList!!.count { it.isSelected }
+    }
+
+    fun undoDeleteNotes() {
+        _uiState.update { state ->
+            state.copy(
+                noteUIList = cacheNoteUIList ?: state.noteUIList,
+            )
+        }
+
+        cacheNoteUIList = null
+    }
+
+    fun deleteNotesInCache() {
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value.noteUIList.forEach {
-                if (it.isSelected) {
-                    repository.delete(it.note)
+            cacheNoteUIList?.forEach { noteUIState ->
+                if (noteUIState.isSelected) {
+                    repository.delete(noteUIState.note)
                 }
             }
-
-            _uiState.update { state ->
-                state.copy(
-                    noteUIList = state.noteUIList.filter { !it.isSelected }
-                )
-            }
+            cacheNoteUIList = null
         }
     }
 
@@ -248,17 +269,13 @@ class MainScreenViewModel(
 data class MainScreenUIState(
     val noteUIList: List<NoteUIState> = emptyList(),
     val isSelectingNote: Boolean = false,
-    val isAllSelected: Boolean = false
+    val isAllSelected: Boolean = false,
 ) {
     companion object {
         fun fromNoteList(notes: List<Note>): MainScreenUIState {
             return MainScreenUIState(
                 noteUIList = notes.map { NoteUIState(it) }
             )
-        }
-
-        fun toNoteList(uiState: MainScreenUIState): List<Note> {
-            return uiState.noteUIList.map { it.note }
         }
     }
 }
@@ -269,4 +286,3 @@ data class NoteUIState(
     val isSelected: Boolean = false,
     val isNew: Boolean = false
 )
-

@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">QuickNote</string>
 
+    <string name="note">ghi chú</string>
     <string name="note_type_text">Ghi chú thường</string>
     <string name="note_type_link">Liên kết</string>
     <string name="note_type_money">Tiền</string>
@@ -13,6 +14,8 @@
     <string name="n_day_before">%s ngày trước</string>
     <string name="n_day_after">%s ngày tới</string>
 
+    <string name="creation_date">Ngày tạo: %s</string>
+
     <string name="money_UNIT">Đồng</string>
     <string name="money_K">Nghìn Đồng</string>
     <string name="money_M">Triệu Đồng</string>
@@ -24,6 +27,7 @@
     
     <string name="done">Xong</string>
     <string name="cancel">Hủy</string>
+    <string name="undo">Hoàn tác</string>
 
     <string name="unable_to_open_link">Không thể mở liên kết</string>
 
@@ -32,7 +36,6 @@
     <string name="link_placeholder">Nhập liên kết</string>
 
     <string name="delete">Xóa</string>
-    <string name="undo">Quay lại</string>
 
     <string name="untitled">Chưa có tiêu đề</string>
     <string name="empty_text">Ghi chú trống</string>
@@ -42,4 +45,6 @@
 
     <string name="dialog_title_key_comb">Tạo tổ hợp phím</string>
     <string name="empty_key_comb">Tổ hợp phím trống</string>
+
+    <string name="deleted">Đã xóa</string>
 </resources>

@@ -8,9 +8,7 @@ class RoomNoteRepository(
     private val noteDao: NoteDao
 ): NoteRepository {
     override suspend fun getAll(): List<Note> {
-        val a = noteDao.getAll().map { it.toNote() }
-        Log.e("RoomNoteRepository", "getAll: ${a.map { it.noteId }}")
-        return a
+        return noteDao.getAll().map { it.toNote() }
     }
 
     override suspend fun insert(note: Note) {

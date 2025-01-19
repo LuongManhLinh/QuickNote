@@ -5,19 +5,22 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,18 +29,26 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarData
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.PathSegment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.quicknote.ProjectViewModelProvider
 import com.example.quicknote.R
@@ -51,15 +62,55 @@ fun MainScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
+
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    CustomSnackbar(
+                        modifier = Modifier
+                            .padding(
+                                dimensionResource(R.dimen.small)
+                            )
+                            .clickable {
+                                data.dismiss()
+                            },
+                        data = data
+                    )
+                }
+            )
+        },
         topBar = {
             if (uiState.isSelectingNote) {
+                val deletedStr = stringResource(R.string.deleted)
+                val noteStr = stringResource(R.string.note)
+                val undoStr = stringResource(R.string.undo)
+
                 MainScreenTopBar(
                     isAllSelected = uiState.isAllSelected,
-                    onDelete = viewModel::deleteSelectedNotes,
+                    onDelete = {
+                        coroutineScope.launch {
+                            val numDeleted = viewModel.deleteSelectedNotes()
+
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            val result = snackbarHostState.showSnackbar(
+                                message = "$deletedStr $numDeleted $noteStr",
+                                actionLabel = undoStr,
+                                duration = SnackbarDuration.Long,
+                            )
+
+                            if (result == SnackbarResult.ActionPerformed) {
+                                viewModel.undoDeleteNotes()
+                            } else if (result == SnackbarResult.Dismissed) {
+                                viewModel.deleteNotesInCache()
+                            }
+                        }
+                    },
                     onSelectAll = viewModel::selectAllNotes,
                     onCancel = viewModel::stopSelectingNote
                 )
@@ -116,7 +167,7 @@ fun MainScreen(
                         viewModel.startSelectingNote()
                         viewModel.selectNote(it, true)
                     },
-                    onDoubleTap = viewModel::onNoteChangeStateToEditing
+                    onDoubleTap = viewModel::changeNoteStateToEditing
                 )
             }
         }
@@ -154,9 +205,7 @@ private fun MainScreenTopBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )
-
     )
-
 }
 
 @Composable
@@ -171,14 +220,19 @@ private fun MainScreenTopBarContent(
             .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = isAllSelected,
-            onCheckedChange = onSelectAll
-        )
-        Text(
-            text = stringResource(R.string.select_all),
-            style = MaterialTheme.typography.bodyLarge,
-        )
+        Row(
+            modifier = Modifier.clickable { onSelectAll(!isAllSelected) },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(
+                checked = isAllSelected,
+                onCheckedChange = onSelectAll
+            )
+            Text(
+                text = stringResource(R.string.select_all),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
         Spacer(Modifier.weight(1f))
         Button(
             onClick = onDelete,
@@ -199,6 +253,45 @@ private fun MainScreenTopBarContent(
             }
         }
         Spacer(Modifier.padding(horizontal = dimensionResource(R.dimen.tiny)))
+    }
+}
+
+@Composable
+private fun CustomSnackbar(
+    modifier: Modifier = Modifier,
+    data: SnackbarData,
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        shape = RoundedCornerShape(dimensionResource(R.dimen.large))
+    ) {
+        Row(
+            modifier = Modifier.padding(dimensionResource(R.dimen.normal)),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = data.visuals.message,
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            data.visuals.actionLabel?.let {
+                Text(
+                    text = it,
+                    modifier = Modifier.clickable { data.performAction() },
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        color = Color.Blue,
+                        textDecoration = TextDecoration.Underline,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -234,6 +327,7 @@ private fun TopBarPreview() {
         )
     }
 }
+
 
 
 
