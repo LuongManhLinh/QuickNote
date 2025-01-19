@@ -1,5 +1,6 @@
 package com.example.quicknote.data.repository
 
+import android.util.Log
 import com.example.quicknote.data.database.NoteDao
 import com.example.quicknote.data.entity.Note
 
@@ -7,7 +8,9 @@ class RoomNoteRepository(
     private val noteDao: NoteDao
 ): NoteRepository {
     override suspend fun getAll(): List<Note> {
-        return noteDao.getAll().map { it.toNote() }
+        val a = noteDao.getAll().map { it.toNote() }
+        Log.e("RoomNoteRepository", "getAll: ${a.map { it.noteId }}")
+        return a
     }
 
     override suspend fun insert(note: Note) {
@@ -15,6 +18,7 @@ class RoomNoteRepository(
     }
 
     override suspend fun update(note: Note) {
+        Log.e("RoomNoteRepository", "update: ${note.noteId}")
         noteDao.update(note.toNoteEntity())
     }
 

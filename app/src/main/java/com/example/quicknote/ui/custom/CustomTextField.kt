@@ -1,9 +1,11 @@
 package com.example.quicknote.ui.custom
 
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -12,14 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextRange
@@ -33,13 +28,12 @@ import com.example.quicknote.R
 import com.example.quicknote.ui.theme.QuickNoteTheme
 import com.example.quicknote.util.formatNumberWithComma
 import com.example.quicknote.util.removeCommaFromNumber
-import kotlin.math.min
 
 @Composable
 fun CustomTextField(
     modifier: Modifier = Modifier,
     value: String,
-    onValueChanged: (String) -> Unit,
+    onValueChange: (String) -> Unit,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     placeholder: String = "",
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
@@ -47,7 +41,7 @@ fun CustomTextField(
     BasicTextField(
         modifier = modifier,
         value = value,
-        onValueChange = onValueChanged,
+        onValueChange = onValueChange,
         textStyle = textStyle,
         decorationBox = { innerTextField ->
             if (value.isEmpty()) {
@@ -66,7 +60,7 @@ fun CustomTextField(
 fun CustomMoneyTextField(
     modifier: Modifier = Modifier,
     value: String,
-    onValueChanged: (String) -> Unit,
+    onValueChange: (String) -> Unit,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     keyboardOptions: KeyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Number,
@@ -79,13 +73,13 @@ fun CustomMoneyTextField(
     val showingValue = formatNumberWithComma(value.toLong())
 
     BasicTextField(
-        modifier = modifier,
+        modifier = modifier.width(IntrinsicSize.Min),
         value = TextFieldValue(
             text = showingValue,
             selection = TextRange(showingValue.length)
         ),
         onValueChange = {
-            onValueChanged(removeCommaFromNumber(it.text))
+            onValueChange(removeCommaFromNumber(it.text))
         },
         textStyle = textStyle,
         decorationBox = {
@@ -119,7 +113,7 @@ private fun CustomMoneyTextFieldPreview() {
     QuickNoteTheme {
         CustomMoneyTextField(
             value = "1000",
-            onValueChanged = {},
+            onValueChange = {},
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Add,

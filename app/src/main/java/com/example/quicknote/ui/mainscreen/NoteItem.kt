@@ -4,22 +4,17 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,9 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,7 +40,6 @@ import com.example.quicknote.ui.theme.QuickNoteTheme
 import com.example.quicknote.util.formatNumberWithComma
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 internal fun NoteItem(
@@ -226,64 +218,37 @@ private fun NoteContentDatetime(
 
 
 @Composable
-private fun NoteContentKeyCombination(
+internal fun NoteContentKeyCombination(
     modifier: Modifier = Modifier,
     combination: List<Key>
 ) {
-    val keyAsAny: List<Any> = combination.flatMap { listOf(it, "+") }.dropLast(1)
-
     LazyRow(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        items(keyAsAny) { key ->
-            when (key) {
-                is Key.KeyText -> {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        border = BorderStroke(
-                            dimensionResource(R.dimen.micro),
-                            MaterialTheme.colorScheme.tertiary
-                        ),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.tiny_small))
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .padding(dimensionResource(R.dimen.tiny)),
-                            text = key.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
+        if (combination.isEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.empty_key_comb),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            items(combination.size) { idx ->
+                when (val key = combination[idx]) {
+                    is Key.KeyText -> {
+                        KeyCombinationText(key = key)
+                    }
+
+                    is Key.KeySymbol -> {
+                        KeyCombinationSymbol(key = key)
                     }
                 }
 
-                is Key.KeySymbol -> {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        border = BorderStroke(
-                            dimensionResource(R.dimen.micro),
-                            MaterialTheme.colorScheme.tertiary
-                        ),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.tiny_small))
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(dimensionResource(R.dimen.key_sym_size))
-                                .padding(dimensionResource(R.dimen.tiny)),
-                            painter = painterResource(key.iconId),
-                            contentDescription = key.contentDescription
-                        )
-                    }
-                }
-
-                is String -> {
+                if (idx != combination.size - 1) {
                     Text(
                         modifier = Modifier.padding(dimensionResource(R.dimen.tiny)),
-                        text = key,
+                        text = "+",
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }

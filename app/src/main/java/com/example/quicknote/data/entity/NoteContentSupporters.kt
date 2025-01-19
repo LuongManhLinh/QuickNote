@@ -28,6 +28,7 @@ object LocalDateSerializer : KSerializer<LocalDate> {
     }
 }
 
+@Serializable
 sealed interface Key {
     @Serializable
     data class KeyText(val text: String) : Key {
@@ -44,6 +45,19 @@ sealed interface Key {
             val DELETE = KeyText("Delete")
             val FN = KeyText("Fn")
             val SPACE = KeyText("Dấu cách")
+
+            val all = listOf(
+                CTRL,
+                ALT,
+                SHIFT,
+                TAB,
+                ENTER,
+                ESC,
+                BACKSPACE,
+                DELETE,
+                FN,
+                SPACE
+            )
         }
     }
 
@@ -58,28 +72,16 @@ sealed interface Key {
             val ARROW_DOWN = KeySymbol(R.drawable.key_sym_arrow_down, "Arrow Down")
             val ARROW_LEFT = KeySymbol(R.drawable.key_sym_arrow_left, "Arrow Left")
             val ARROW_RIGHT = KeySymbol(R.drawable.key_sym_arrow_right, "Arrow Right")
+
+            val all = listOf(
+                WINDOW,
+                ARROW_UP,
+                ARROW_DOWN,
+                ARROW_LEFT,
+                ARROW_RIGHT
+            )
         }
     }
-
-    val specialKeyList: List<Key>
-        get() = listOf(
-            KeyText.CTRL,
-            KeyText.ALT,
-            KeyText.SHIFT,
-            KeyText.TAB,
-            KeyText.ENTER,
-            KeyText.ESC,
-            KeyText.BACKSPACE,
-            KeyText.DELETE,
-            KeyText.FN,
-            KeyText.SPACE,
-            KeySymbol.WINDOW,
-            KeySymbol.ARROW_UP,
-            KeySymbol.ARROW_DOWN,
-            KeySymbol.ARROW_LEFT,
-            KeySymbol.ARROW_RIGHT
-        )
-
 }
 
 

@@ -1,5 +1,6 @@
 package com.example.quicknote.ui.mainscreen
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -65,11 +65,8 @@ import com.example.quicknote.data.entity.NoteContentPresentation
 import com.example.quicknote.ui.custom.CustomMoneyTextField
 import com.example.quicknote.ui.custom.CustomTextField
 import com.example.quicknote.ui.theme.QuickNoteTheme
-import com.example.quicknote.util.formatNumberWithComma
-import com.example.quicknote.util.removeCommaFromNumber
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 internal fun NoteItemEdit(
@@ -255,7 +252,18 @@ private fun NoteItemEditMainContent(
         is NoteContent.KeyCombination -> {
             NoteContentKeyCombinationEdit(
                 modifier = modifier,
-                combination = content.combination
+                combination = content.combination,
+                onKeyListChange = { combination ->
+                    onNoteChanged(
+                        note.copy(
+                            contents = note.contents.toMutableList().apply {
+                                this[contentIdx] = content.copy(
+                                    combination = combination
+                                )
+                            }
+                        )
+                    )
+                }
             )
         }
 
@@ -303,7 +311,6 @@ private fun NoteItemEditBottomButtons(
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceAround
-
     ) {
         notePresentationList.forEachIndexed { idx, presentation ->
             EditActionButton(
@@ -403,7 +410,7 @@ private fun NoteTitleEdit(
     CustomTextField(
         modifier = modifier,
         value = title,
-        onValueChanged = onTitleChanged,
+        onValueChange = onTitleChanged,
         textStyle = MaterialTheme.typography.titleLarge,
         placeholder = stringResource(R.string.title_placeholder)
     )
@@ -420,7 +427,7 @@ private fun NoteContentTextEdit(
     CustomTextField(
         modifier = modifier,
         value = text,
-        onValueChanged = onTextChanged,
+        onValueChange = onTextChanged,
         textStyle = MaterialTheme.typography.bodyLarge,
         placeholder = stringResource(R.string.text_placeholder)
     )
@@ -505,74 +512,6 @@ private fun DatePickerModal(
 
 
 @Composable
-private fun NoteContentKeyCombinationEdit(
-    modifier: Modifier = Modifier,
-    combination: List<Key>
-) {
-    val keyAsAny: List<Any> = combination.flatMap { listOf(it, "+") }.dropLast(1)
-
-    LazyRow(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items(keyAsAny) { key ->
-            when (key) {
-                is Key.KeyText -> {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        border = BorderStroke(
-                            dimensionResource(R.dimen.micro),
-                            MaterialTheme.colorScheme.tertiary
-                        ),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.tiny_small))
-                    ) {
-                        Text(
-                            modifier = Modifier
-                                .padding(dimensionResource(R.dimen.tiny)),
-                            text = key.text,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                is Key.KeySymbol -> {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                        ),
-                        border = BorderStroke(
-                            dimensionResource(R.dimen.micro),
-                            MaterialTheme.colorScheme.tertiary
-                        ),
-                        shape = RoundedCornerShape(dimensionResource(R.dimen.tiny_small))
-                    ) {
-                        Icon(
-                            modifier = Modifier
-                                .size(dimensionResource(R.dimen.key_sym_size))
-                                .padding(dimensionResource(R.dimen.tiny)),
-                            painter = painterResource(key.iconId),
-                            contentDescription = key.contentDescription
-                        )
-                    }
-                }
-
-                is String -> {
-                    Text(
-                        modifier = Modifier.padding(dimensionResource(R.dimen.tiny)),
-                        text = key,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
 private fun NoteContentLinkEdit(
     modifier: Modifier = Modifier,
     link: String,
@@ -581,7 +520,7 @@ private fun NoteContentLinkEdit(
     CustomTextField(
         modifier = modifier,
         value = link,
-        onValueChanged = onLinkChanged,
+        onValueChange = onLinkChanged,
         placeholder = stringResource(R.string.link_placeholder),
         textStyle = TextStyle(
             color = if (isSystemInDarkTheme()) {
@@ -596,6 +535,33 @@ private fun NoteContentLinkEdit(
     )
 }
 
+
+@Composable
+private fun NoteContentKeyCombinationEdit(
+    modifier: Modifier = Modifier,
+    combination: List<Key>,
+    onKeyListChange: (List<Key>) -> Unit
+) {
+    var openDialog by rememberSaveable { mutableStateOf(false) }
+    var newKeyList by rememberSaveable { mutableStateOf(combination) }
+
+    NoteContentKeyCombination(
+        modifier = modifier.clickable { openDialog = true },
+        combination = combination,
+    )
+
+    if (openDialog) {
+        NoteItemEditKeyCombinationDialog(
+            keyList = newKeyList,
+            onKeyListChange = { newKeyList = it },
+            onDismissRequest = { openDialog = false },
+            onDone = {
+                onKeyListChange(newKeyList)
+                openDialog = false
+            }
+        )
+    }
+}
 
 
 @Composable
@@ -617,7 +583,7 @@ private fun NoteContentMoneyEdit(
         CustomMoneyTextField(
             modifier = Modifier,
             value = amount.toString(),
-            onValueChanged = {
+            onValueChange = {
                 val value = if (it.isEmpty() || !it.isDigitsOnly()) {
                     0u
                 } else {
@@ -635,27 +601,6 @@ private fun NoteContentMoneyEdit(
                 imeAction = ImeAction.Done
             )
         )
-//        CustomTextField(
-//            modifier = Modifier,
-//            value = amount.toString(),
-//            onValueChanged = {
-//                val value = if (it.isEmpty() || !it.isDigitsOnly()) {
-//                    0u
-//                } else {
-//                    var parsed = it.toULongOrNull()
-//                    while (parsed == null) {
-//                        parsed = it.dropLast(1).toULongOrNull()
-//                    }
-//                    parsed
-//                }
-//
-//                onMoneyChanged(value)
-//            },
-//            keyboardOptions = KeyboardOptions(
-//                keyboardType = KeyboardType.Number,
-//                imeAction = ImeAction.Done
-//            )
-//        )
 
         Text(
             text = " " + stringResource(R.string.money_UNIT),

@@ -31,7 +31,6 @@ class MainScreenViewModel(
                 MainScreenUIState.fromNoteList(repository.getAll())
             }
         }
-
     }
 
     fun getAllNoteContentPresentation(): List<NoteContentPresentation> {
@@ -42,7 +41,8 @@ class MainScreenViewModel(
         viewModelScope.launch {
             val newNoteUI = NoteUIState(
                 Note(),
-                isEditing = true
+                isEditing = true,
+                isNew = true
             )
 
             noteEditingStack.add(newNoteUI.note)
@@ -123,17 +123,24 @@ class MainScreenViewModel(
 
     fun onNoteEditingDone(noteIdx: Int) {
         noteEditingStack.clear()
-        val note = _uiState.value.noteUIList[noteIdx].note
+        val noteUIState = _uiState.value.noteUIList[noteIdx]
 
         viewModelScope.launch(Dispatchers.IO) {
-            repository.insert(note)
+            if (noteUIState.isNew) {
+                repository.insert(note = noteUIState.note)
+            } else {
+                repository.update(note = noteUIState.note)
+            }
         }
 
         _uiState.update {
             it.copy(
                 noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
                     if (idx == noteIdx) {
-                        noteUIState.copy(isEditing = false)
+                        noteUIState.copy(
+                            isEditing = false,
+                            isNew = false
+                        )
                     } else {
                         noteUIState
                     }
@@ -147,11 +154,15 @@ class MainScreenViewModel(
 
         _uiState.update {
             it.copy(
-                noteUIList = it.noteUIList.mapIndexed { index, noteUIState ->
-                    if (index == noteIdx) {
-                        noteUIState.copy(isEditing = false)
-                    } else {
-                        noteUIState
+                noteUIList = if (it.noteUIList[noteIdx].isNew) {
+                    it.noteUIList.toMutableList().apply { removeAt(noteIdx) }
+                } else {
+                    it.noteUIList.mapIndexed { index, noteUIState ->
+                        if (index == noteIdx) {
+                            noteUIState.copy(isEditing = false)
+                        } else {
+                            noteUIState
+                        }
                     }
                 }
             )
@@ -256,5 +267,6 @@ data class NoteUIState(
     val note: Note,
     val isEditing: Boolean = false,
     val isSelected: Boolean = false,
+    val isNew: Boolean = false
 )
 

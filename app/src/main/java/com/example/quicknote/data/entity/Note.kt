@@ -5,7 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
-data class Note(
+class Note(
     val title: String = "",
     val contents: List<NoteContent> = emptyList()
 ) {
@@ -16,5 +16,17 @@ data class Note(
             id = noteId,
             noteAsJson = Json.encodeToString(this)
         )
+    }
+
+    fun copy(
+        title: String = this.title,
+        contents: List<NoteContent> = this.contents
+    ): Note {
+        return Note(
+            title = title,
+            contents = contents
+        ).also {
+            it.noteId = noteId
+        }
     }
 }

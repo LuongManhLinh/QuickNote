@@ -14,8 +14,8 @@ data class NoteEntity(
     val noteAsJson: String
 ) {
     fun toNote(): Note {
-        val note = Json.decodeFromString<Note>(this.noteAsJson)
-        note.noteId = id
-        return note
+        return Json.decodeFromString<Note>(this.noteAsJson).also {
+            it.noteId = id
+        }
     }
 }

@@ -16,8 +16,8 @@
     <string name="money_UNIT">Đồng</string>
     <string name="money_K">Nghìn Đồng</string>
     <string name="money_M">Triệu Đồng</string>
-    <string name="money_add">Cộng tiền</string>
-    <string name="money_sub">Trừ tiền</string>
+    <string name="dialog_title_money_add">Cộng tiền</string>
+    <string name="dialog_title_money_sub">Trừ tiền</string>
     <string name="money_current">Số tiền hiện tại: </string>
     <string name="money_after_changing">Số tiền sau thay đổi: </string>
     <string name="money_enter">Nhập số tiền</string>
@@ -40,5 +40,6 @@
     <string name="no_note">Chưa có ghi chú nào</string>
     <string name="select_all">Chọn tất cả</string>
 
-
+    <string name="dialog_title_key_comb">Tạo tổ hợp phím</string>
+    <string name="empty_key_comb">Tổ hợp phím trống</string>
 </resources>
