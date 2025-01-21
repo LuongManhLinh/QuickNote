@@ -332,7 +332,7 @@ private fun DialogBottomButtons(
 @Preview(showBackground = true)
 @Composable
 private fun Preview() {
-    QuickNoteTheme {
+    QuickNoteTheme(darkTheme = true) {
         NoteItemEditMoneyDialog(
             currentMoney = 1000,
             value = "100000",

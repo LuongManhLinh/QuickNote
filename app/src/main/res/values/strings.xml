@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Ghi Chú</string>
+    <string name="app_name">Ghi chú</string>
 
     <string name="note">ghi chú</string>
     <string name="note_type_text">Ghi chú thường</string>
@@ -28,8 +28,10 @@
     <string name="done">Xong</string>
     <string name="cancel">Hủy</string>
     <string name="undo">Hoàn tác</string>
+    <string name="copy">Sao chép</string>
 
     <string name="unable_to_open_link">Không thể mở liên kết</string>
+    <string name="open_link">Mở liên kết</string>
 
     <string name="title_placeholder">Nhập tiêu đề</string>
     <string name="text_placeholder">Nhập ghi chú</string>
@@ -47,4 +49,5 @@
     <string name="empty_key_comb">Tổ hợp phím trống</string>
 
     <string name="deleted">Đã xóa</string>
+    <string name="copied_to_clipboard">Đã sao chép vào bộ nhớ tạm</string>
 </resources>

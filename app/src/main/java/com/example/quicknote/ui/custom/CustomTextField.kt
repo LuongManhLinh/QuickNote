@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -35,25 +36,27 @@ fun CustomTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    textColor: Color = MaterialTheme.colorScheme.onBackground,
     placeholder: String = "",
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
     BasicTextField(
         modifier = modifier,
         value = value,
         onValueChange = onValueChange,
-        textStyle = textStyle,
+        textStyle = textStyle.copy(color = textColor),
         decorationBox = { innerTextField ->
             if (value.isEmpty()) {
                 Text(
                     text = placeholder,
-                    style = textStyle.copy(color = MaterialTheme.colorScheme.onBackground)
+                    style = textStyle.copy(color = textColor.copy(alpha = 0.5f))
                 )
             }
             innerTextField()
         },
-        keyboardOptions = keyboardOptions
+        keyboardOptions = keyboardOptions,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
     )
 }
 
@@ -62,7 +65,8 @@ fun CustomMoneyTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    textColor: Color = MaterialTheme.colorScheme.onBackground,
     keyboardOptions: KeyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Number,
         imeAction = ImeAction.Done
@@ -82,7 +86,7 @@ fun CustomMoneyTextField(
         onValueChange = {
             onValueChange(removeCommaFromNumber(it.text))
         },
-        textStyle = textStyle,
+        textStyle = textStyle.copy(color = textColor),
         decorationBox = {
             Row(
                 modifier = Modifier.padding(contentPadding),
@@ -94,7 +98,7 @@ fun CustomMoneyTextField(
                 if (value.isEmpty()) {
                     Text(
                         text = "0",
-                        style = textStyle.copy(color = MaterialTheme.colorScheme.onBackground)
+                        style = textStyle.copy(color = textColor)
                     )
                 }
                 it()
@@ -104,7 +108,8 @@ fun CustomMoneyTextField(
                 }
             }
         },
-        keyboardOptions = keyboardOptions
+        keyboardOptions = keyboardOptions,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
     )
 }
 

@@ -44,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -67,7 +66,6 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-
 
     Scaffold(
         snackbarHost = {
@@ -164,7 +162,7 @@ fun MainScreen(
                     onNoteEditingDone = viewModel::onNoteEditingDone,
                     onNoteLongPress = {
                         coroutineScope.launch {
-                            vibrate(context, 100)
+                            vibrate(context, 200)
                         }
                         viewModel.startSelectingNote()
                         viewModel.selectNote(it, true)
@@ -300,8 +298,6 @@ private fun CustomSnackbar(
         }
     }
 }
-
-
 
 private fun vibrate(
     context: Context,

@@ -24,14 +24,14 @@ fun NoteContentLinkEdit(
         onValueChange = onLinkChanged,
         placeholder = stringResource(R.string.link_placeholder),
         textStyle = TextStyle(
-            color = if (isSystemInDarkTheme()) {
-                colorResource(R.color.link_on_dark)
-            } else {
-                colorResource(R.color.link_on_light)
-            },
             textDecoration = TextDecoration.Underline,
             fontSize = MaterialTheme.typography.bodyLarge.fontSize,
             fontWeight = FontWeight.Normal
-        )
+        ),
+        textColor = if (isSystemInDarkTheme()) {
+            colorResource(R.color.link_on_dark)
+        } else {
+            colorResource(R.color.link_on_light)
+        }
     )
 }

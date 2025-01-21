@@ -2,6 +2,7 @@ package com.example.quicknote.ui.mainscreen.item
 
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -38,6 +39,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
@@ -118,8 +120,6 @@ private fun NoteItemContent(
     isSelected: Boolean = false,
     onSelectionChanged: (Boolean) -> Unit = {}
 ) {
-    val context = LocalContext.current
-
     Card(
         modifier = modifier
             .then(
@@ -142,19 +142,16 @@ private fun NoteItemContent(
                 verticalArrangement = Arrangement.Center,
             ) {
                 NoteTitle(
-                    title = note.title.ifEmpty {
-                        stringResource(R.string.untitled)
-                    }
+                    title = note.title
                 )
+
                 note.contents.forEach { content ->
                     HorizontalDivider(Modifier.padding(vertical = dimensionResource(R.dimen.small)))
 
                     when (content) {
                         is NoteContent.Text -> {
                             NoteContentText(
-                                text = content.text.ifEmpty {
-                                    stringResource(R.string.empty_text)
-                                }
+                                text = content.text
                             )
                         }
 
@@ -172,24 +169,7 @@ private fun NoteItemContent(
 
                         is NoteContent.Link -> {
                             NoteContentLink(
-                                link = content.url,
-                                onLinkClicked = { link ->
-                                    try {
-                                        val validLink = if (link.startsWith("http://")
-                                            || link.startsWith("https://"))
-                                        {
-                                            link
-                                        } else {
-                                            "https://$link"
-                                        }
-                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
-                                        context.startActivity(intent)
-                                    } catch (e: Exception) {
-                                        Toast.makeText(
-                                            context, "Không thể mở liên kết", Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                }
+                                link = content.url
                             )
                         }
 
@@ -209,7 +189,6 @@ private fun NoteItemContent(
                 )
             }
         }
-
     }
 }
 
