@@ -82,7 +82,7 @@ class MainScreenViewModel(
 
         val content = when (typeId) {
             0 -> NoteContent.Text("")
-            1 -> NoteContent.Money(0u)
+            1 -> NoteContent.Money(0L)
             2 -> NoteContent.Datetime(LocalDate.now())
             3 -> NoteContent.Link("")
             4 -> NoteContent.KeyCombination(emptyList())
@@ -226,18 +226,11 @@ class MainScreenViewModel(
     }
 
     fun deleteSelectedNotes(): Int {
-//        cacheNoteUIList = _uiState.value.noteUIList
-//
-//        _uiState.update { state ->
-//            state.copy(
-//                noteUIList = state.noteUIList.filter { !it.isSelected },
-//            )
-//        }
-//
-//        // Return the number of notes that are selected and will be deleted
-//        return cacheNoteUIList!!.count { it.isSelected }
-
         val selectedNotes = _uiState.value.noteUIList.filter { it.isSelected }
+        if (selectedNotes.isEmpty()) {
+            return 0
+        }
+
         cacheNoteUIList = selectedNotes
         viewModelScope.launch(Dispatchers.IO) {
             selectedNotes.forEach { noteUIState ->
@@ -250,13 +243,6 @@ class MainScreenViewModel(
     }
 
     fun undoDeleteNotes() {
-//        _uiState.update { state ->
-//            state.copy(
-//                noteUIList = cacheNoteUIList ?: state.noteUIList,
-//            )
-//        }
-//
-//        cacheNoteUIList = null
         viewModelScope.launch(Dispatchers.IO) {
             cacheNoteUIList?.forEach { noteUIState ->
                 repository.insert(noteUIState.note)

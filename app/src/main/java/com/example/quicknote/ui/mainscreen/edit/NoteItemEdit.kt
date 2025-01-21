@@ -340,7 +340,7 @@ private fun EditActionButton(
     onClick: () -> Unit,
     @DrawableRes iconId: Int,
     @StringRes textId: Int,
-    iconTint: Color = Color.Black,
+    iconTint: Color = MaterialTheme.colorScheme.onBackground,
     containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
 ) {
     Card(
@@ -387,7 +387,7 @@ private fun Preview() {
                     NoteContent.Datetime(LocalDate.now()),
                     NoteContent.Link("https://www.google.com"),
                     NoteContent.KeyCombination(listOf(Key.KeyText("Ctrl"))),
-                    NoteContent.Money(10000u)
+                    NoteContent.Money(10000)
                 )
             ),
             noteIdx = 0,

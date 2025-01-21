@@ -31,8 +31,8 @@ import com.example.quicknote.ui.custom.CustomMoneyTextField
 @Composable
 fun NoteContentMoneyEdit(
     modifier: Modifier = Modifier,
-    amount: ULong,
-    onMoneyChanged: (ULong) -> Unit,
+    amount: Long,
+    onMoneyChanged: (Long) -> Unit,
 ) {
 
     var openDialog by rememberSaveable { mutableStateOf(false) }
@@ -49,11 +49,11 @@ fun NoteContentMoneyEdit(
             value = amount.toString(),
             onValueChange = {
                 val value = if (it.isEmpty() || !it.isDigitsOnly()) {
-                    0u
+                    0L
                 } else {
-                    var parsed = it.toULongOrNull()
+                    var parsed = it.toLongOrNull()
                     while (parsed == null) {
-                        parsed = it.dropLast(1).toULongOrNull()
+                        parsed = it.dropLast(1).toLongOrNull()
                     }
                     parsed
                 }
@@ -111,9 +111,9 @@ fun NoteContentMoneyEdit(
             onDone = {
                 onMoneyChanged(
                     if (isAdding) {
-                        amount + changingValue.toULong()
+                        amount + changingValue
                     } else {
-                        amount - changingValue.toULong()
+                        amount - changingValue
                     }
                 )
                 openDialog = false

@@ -43,10 +43,11 @@ import java.util.Locale
 import com.example.quicknote.data.entity.Key
 import com.example.quicknote.ui.mainscreen.item.KeyCombinationSymbol
 import com.example.quicknote.ui.mainscreen.item.KeyCombinationText
+import kotlin.math.max
 
 @Composable
 internal fun NoteItemEditMoneyDialog(
-    currentMoney: ULong,
+    currentMoney: Long,
     isAdding: Boolean,
     value: String,
     onValueChanged: (String) -> Unit,
@@ -120,9 +121,9 @@ internal fun NoteItemEditMoneyDialog(
                             append(
                                 formatNumberWithComma(
                                     if (isAdding) {
-                                        currentMoney + value.toULong()
+                                        currentMoney + value.toLong()
                                     } else {
-                                        currentMoney - value.toULong()
+                                        currentMoney - value.toLong()
                                     }
                                 )
                             )
@@ -333,7 +334,7 @@ private fun DialogBottomButtons(
 private fun Preview() {
     QuickNoteTheme {
         NoteItemEditMoneyDialog(
-            currentMoney = 1000u,
+            currentMoney = 1000,
             value = "100000",
             isAdding = true,
             onValueChanged = {},

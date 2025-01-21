@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,7 +35,7 @@ fun CustomTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
     placeholder: String = "",
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
@@ -47,7 +48,7 @@ fun CustomTextField(
             if (value.isEmpty()) {
                 Text(
                     text = placeholder,
-                    style = textStyle.copy(color = Color.Gray)
+                    style = textStyle.copy(color = MaterialTheme.colorScheme.onBackground)
                 )
             }
             innerTextField()
@@ -61,7 +62,7 @@ fun CustomMoneyTextField(
     modifier: Modifier = Modifier,
     value: String,
     onValueChange: (String) -> Unit,
-    textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    textStyle: TextStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onBackground),
     keyboardOptions: KeyboardOptions = KeyboardOptions(
         keyboardType = KeyboardType.Number,
         imeAction = ImeAction.Done
@@ -93,7 +94,7 @@ fun CustomMoneyTextField(
                 if (value.isEmpty()) {
                     Text(
                         text = "0",
-                        style = textStyle.copy(color = Color.Gray)
+                        style = textStyle.copy(color = MaterialTheme.colorScheme.onBackground)
                     )
                 }
                 it()
@@ -122,5 +123,18 @@ private fun CustomMoneyTextFieldPreview() {
             },
             trailingIcon = {}
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun CustomTextFieldPreview() {
+    QuickNoteTheme(darkTheme = true) {
+        Card {
+            CustomTextField(
+                value = "1000",
+                onValueChange = {}
+            )
+        }
     }
 }

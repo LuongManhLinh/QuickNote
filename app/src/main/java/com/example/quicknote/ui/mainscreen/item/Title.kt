@@ -13,6 +13,6 @@ fun NoteTitle(
     Text(
         modifier = modifier,
         text = title,
-        style = MaterialTheme.typography.titleLarge
+        style = MaterialTheme.typography.headlineSmall
     )
 }

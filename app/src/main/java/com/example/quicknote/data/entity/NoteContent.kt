@@ -12,7 +12,7 @@ sealed class NoteContent {
 
     @Serializable
     data class Money(
-        var amount: ULong
+        var amount: Long
     ) : NoteContent()
 
     @Serializable

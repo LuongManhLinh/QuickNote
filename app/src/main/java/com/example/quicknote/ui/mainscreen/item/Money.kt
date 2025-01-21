@@ -16,7 +16,7 @@ import com.example.quicknote.util.formatNumberWithComma
 @Composable
 fun NoteContentMoney(
     modifier: Modifier = Modifier,
-    amount: ULong,
+    amount: Long,
 ) {
     val showString = formatNumberWithComma(amount)
     Log.e("NoteItem", "showString: $showString")
@@ -36,9 +36,9 @@ private fun MoneyPreview() {
             note = Note(
                 title = "Money",
                 contents = listOf(
-                    NoteContent.Money(1000u),
-                    NoteContent.Money(1000000u),
-                    NoteContent.Money(1000000000u)
+                    NoteContent.Money(1000),
+                    NoteContent.Money(1000000),
+                    NoteContent.Money(1000000000)
                 )
             )
         )

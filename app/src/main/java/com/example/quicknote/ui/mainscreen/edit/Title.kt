@@ -17,7 +17,7 @@ fun NoteTitleEdit(
         modifier = modifier,
         value = title,
         onValueChange = onTitleChanged,
-        textStyle = MaterialTheme.typography.titleLarge,
+        textStyle = MaterialTheme.typography.headlineSmall,
         placeholder = stringResource(R.string.title_placeholder)
     )
 

@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -97,15 +99,17 @@ fun MainScreen(
                         coroutineScope.launch {
                             val numDeleted = viewModel.deleteSelectedNotes()
 
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            val result = snackbarHostState.showSnackbar(
-                                message = "$deletedStr $numDeleted $noteStr",
-                                actionLabel = undoStr,
-                                duration = SnackbarDuration.Long,
-                            )
+                            if (numDeleted > 0) {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "$deletedStr $numDeleted $noteStr",
+                                    actionLabel = undoStr,
+                                    duration = SnackbarDuration.Long,
+                                )
 
-                            if (result == SnackbarResult.ActionPerformed) {
-                                viewModel.undoDeleteNotes()
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.undoDeleteNotes()
+                                }
                             }
                         }
                     },
@@ -160,7 +164,7 @@ fun MainScreen(
                     onNoteEditingDone = viewModel::onNoteEditingDone,
                     onNoteLongPress = {
                         coroutineScope.launch {
-                            vibrate(context)
+                            vibrate(context, 100)
                         }
                         viewModel.startSelectingNote()
                         viewModel.selectNote(it, true)
@@ -283,7 +287,11 @@ private fun CustomSnackbar(
                     text = it,
                     modifier = Modifier.clickable { data.performAction() },
                     style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.Blue,
+                        color = if (isSystemInDarkTheme()) {
+                            colorResource(R.color.link_on_dark)
+                        } else {
+                            colorResource(R.color.link_on_light)
+                        },
                         textDecoration = TextDecoration.Underline,
                         fontWeight = FontWeight.Bold
                     )

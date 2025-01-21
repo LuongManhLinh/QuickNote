@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.quicknote.ui.mainscreen.MainScreen
-import com.example.quicknote.ui.mainscreen.MainScreenViewModel
 import com.example.quicknote.ui.theme.QuickNoteTheme
 
 class MainActivity : ComponentActivity() {
