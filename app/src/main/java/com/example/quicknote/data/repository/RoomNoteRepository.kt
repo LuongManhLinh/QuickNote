@@ -13,6 +13,7 @@ class RoomNoteRepository(
 
     override suspend fun insert(note: Note) {
         noteDao.insert(note.toNoteEntity())
+        Log.e("RoomNoteRepository", "insert: ${note.noteId}")
     }
 
     override suspend fun update(note: Note) {
@@ -22,6 +23,7 @@ class RoomNoteRepository(
 
     override suspend fun delete(note: Note) {
         noteDao.delete(note.toNoteEntity())
+        Log.e("RoomNoteRepository", "delete: ${note.noteId}")
     }
 
 }

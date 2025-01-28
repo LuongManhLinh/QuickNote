@@ -1,9 +1,5 @@
 package com.example.quicknote.ui.mainscreen.item
 
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -34,12 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
 import com.example.quicknote.R
 import com.example.quicknote.data.entity.Note
 import com.example.quicknote.data.entity.NoteContent
@@ -64,52 +58,6 @@ fun NoteItem(
         isSelected = isSelected,
         onSelectionChanged = onSelectionChanged
     )
-}
-
-@Composable
-fun AnimatedNoteItem(
-    modifier: Modifier = Modifier,
-    note: Note,
-    isSelectingNote: Boolean = false,
-    isSelected: Boolean = false,
-    onSelectionChanged: (Boolean) -> Unit = {}
-) {
-    var isShowingTopBar by remember { mutableStateOf(true) }
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(
-        modifier = modifier
-    ) {
-        AnimatedNoteTopBar(
-            modifier = Modifier.padding(
-                horizontal = dimensionResource(R.dimen.small)
-            ),
-            creationDate = LocalDate.now(),
-            onEditingStarted = {},
-            isShowing = isShowingTopBar
-        )
-        NoteItemContent(
-            modifier = Modifier
-                .pointerInput(Unit){
-                    detectTapGestures(
-                        onTap = { isShowingTopBar = true}
-                    )
-                },
-            note = note,
-            isSelectingNote = isSelectingNote,
-            isSelected = isSelected,
-            onSelectionChanged = onSelectionChanged
-        )
-    }
-
-    LaunchedEffect(isShowingTopBar) {
-        if (isShowingTopBar) {
-            coroutineScope.launch {
-                delay(1500)
-                isShowingTopBar = false
-            }
-        }
-    }
 }
 
 @Composable
@@ -192,72 +140,6 @@ private fun NoteItemContent(
     }
 }
 
-@Composable
-private fun AnimatedNoteTopBar(
-    modifier: Modifier = Modifier,
-    creationDate: LocalDate,
-    onEditingStarted: () -> Unit,
-    isShowing: Boolean
-) {
-    Box(
-        modifier = modifier.heightIn(
-            min = dimensionResource(R.dimen.normal_medium)
-        ),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        AnimatedVisibility(
-            visible = isShowing,
-            enter = fadeIn(
-                animationSpec = tween(1000)
-            ),
-            exit = fadeOut(
-                animationSpec = tween(1000)
-            )
-        ) {
-            NoteTopBar(
-                creationDate = creationDate,
-                onEditingStarted = onEditingStarted
-            )
-        }
-    }
-
-}
-
-@Composable
-private fun NoteTopBar(
-    modifier: Modifier = Modifier,
-    creationDate: LocalDate,
-    onEditingStarted: () -> Unit
-) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = stringResource(R.string.creation_date, formatDate(creationDate)),
-            fontStyle = FontStyle.Italic
-        )
-        Spacer(Modifier.weight(1f))
-
-        Icon(
-            modifier = Modifier.clickable { onEditingStarted() },
-            imageVector = Icons.Default.EditNote,
-            contentDescription = null
-        )
-
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun NoteTopPreview() {
-    QuickNoteTheme {
-        NoteTopBar(
-            creationDate = LocalDate.now(),
-            onEditingStarted = {}
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

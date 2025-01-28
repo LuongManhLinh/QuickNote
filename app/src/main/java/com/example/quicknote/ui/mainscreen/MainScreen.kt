@@ -117,15 +117,17 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    viewModel.addEditingNote()
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(uiState.noteUIList.size)
+            if (!uiState.isSelectingNote) {
+                FloatingActionButton(
+                    onClick = {
+                        viewModel.addEditingNote()
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(uiState.noteUIList.size)
+                        }
                     }
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null)
                 }
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
             }
         }
     ) { innerPadding ->
@@ -146,6 +148,7 @@ fun MainScreen(
             if (uiState.isSelectingNote) {
                 NoteListSelection(
                     modifier = modifier.padding(innerPadding),
+                    listState = listState,
                     noteUIList = uiState.noteUIList,
                     onSelectionChanged = viewModel::selectNote
                 )

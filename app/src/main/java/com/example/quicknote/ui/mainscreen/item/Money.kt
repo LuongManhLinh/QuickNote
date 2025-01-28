@@ -19,7 +19,6 @@ fun NoteContentMoney(
     amount: Long,
 ) {
     val showString = formatNumberWithComma(amount)
-    Log.e("NoteItem", "showString: $showString")
     Text(
         modifier = modifier,
         text = "$showString ${stringResource(R.string.money_UNIT)}",

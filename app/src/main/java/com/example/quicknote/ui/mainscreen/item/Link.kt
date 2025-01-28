@@ -58,71 +58,68 @@ fun NoteContentLink(
 
     var offset by remember { mutableStateOf(IntOffset.Zero) }
 
-    SelectionContainer {
-        Text(
-            modifier = modifier
-                .pointerInput(Unit) {
-                    detectTapGestures {
-                        offset = IntOffset(it.x.toInt(), it.y.toInt())
-                        isPopupVisible = true
-                    }
-                },
-            text = if (isLinkEmpty) {
-                stringResource(R.string.empty_link)
-            } else {
-                link
-            },
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (isLinkEmpty) {
-                Color.Unspecified
-            } else {
-                if (isSystemInDarkTheme()) {
-                    colorResource(R.color.link_on_dark)
-                } else {
-                    colorResource(R.color.link_on_light)
+    Text(
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    offset = IntOffset(it.x.toInt(), it.y.toInt())
+                    isPopupVisible = true
                 }
             },
-            textDecoration = if (isLinkEmpty) {
-                TextDecoration.None
+        text = if (isLinkEmpty) {
+            stringResource(R.string.empty_link)
+        } else {
+            link
+        },
+        style = MaterialTheme.typography.bodyLarge,
+        color = if (isLinkEmpty) {
+            Color.Unspecified
+        } else {
+            if (isSystemInDarkTheme()) {
+                colorResource(R.color.link_on_dark)
             } else {
-                TextDecoration.Underline
+                colorResource(R.color.link_on_light)
             }
-        )
-
-        if (isPopupVisible) {
-            NoteContentLinkPopup(
-                offset = offset,
-                onOpenLinkClick = {
-                    if (link.isNotEmpty()) {
-                        try {
-                            val validLink = if (link.startsWith("http://")
-                                || link.startsWith("https://"))
-                            {
-                                link
-                            } else {
-                                "https://$link"
-                            }
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                context, unableToOpenLink, Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                },
-                onCopyClick = {
-                    clipboardManager.setText(AnnotatedString(link))
-                    Toast.makeText(
-                        context, copiedToClipboard, Toast.LENGTH_SHORT
-                    ).show()
-                    isPopupVisible = false
-                },
-                onDismissRequest = { isPopupVisible = false },
-            )
+        },
+        textDecoration = if (isLinkEmpty) {
+            TextDecoration.None
+        } else {
+            TextDecoration.Underline
         }
-    }
+    )
 
+    if (isPopupVisible) {
+        NoteContentLinkPopup(
+            offset = offset,
+            onOpenLinkClick = {
+                if (link.isNotEmpty()) {
+                    try {
+                        val validLink = if (link.startsWith("http://")
+                            || link.startsWith("https://"))
+                        {
+                            link
+                        } else {
+                            "https://$link"
+                        }
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(
+                            context, unableToOpenLink, Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            onCopyClick = {
+                clipboardManager.setText(AnnotatedString(link))
+                Toast.makeText(
+                    context, copiedToClipboard, Toast.LENGTH_SHORT
+                ).show()
+                isPopupVisible = false
+            },
+            onDismissRequest = { isPopupVisible = false },
+        )
+    }
 }
 
 @Composable

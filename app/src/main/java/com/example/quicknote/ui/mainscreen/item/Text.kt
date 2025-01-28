@@ -5,9 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -46,20 +43,18 @@ fun NoteContentText(
     var isPopupVisible by remember { mutableStateOf(false) }
 
     Box {
-        SelectionContainer {
-            Text(
-                modifier = modifier
-                    .pointerInput(Unit) {
-                        detectTapGestures {
-                            offset = IntOffset(it.x.toInt(), it.y.toInt())
-                            isPopupVisible = true
-                        }
-                    },
-                text = text.ifEmpty { stringResource(R.string.empty_text) },
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Justify
-            )
-        }
+        Text(
+            modifier = modifier
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        offset = IntOffset(it.x.toInt(), it.y.toInt())
+                        isPopupVisible = true
+                    }
+                },
+            text = text.ifEmpty { stringResource(R.string.empty_text) },
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Justify
+        )
 
         if (isPopupVisible) {
             NoteContentTextPopup(

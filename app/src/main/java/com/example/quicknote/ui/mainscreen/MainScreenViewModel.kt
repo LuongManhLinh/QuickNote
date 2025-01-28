@@ -137,21 +137,8 @@ class MainScreenViewModel(
             } else {
                 repository.update(note = noteUIState.note)
             }
-        }
 
-        _uiState.update {
-            it.copy(
-                noteUIList = it.noteUIList.mapIndexed { idx, noteUIState ->
-                    if (idx == noteIdx) {
-                        noteUIState.copy(
-                            isEditing = false,
-                            isNew = false
-                        )
-                    } else {
-                        noteUIState
-                    }
-                }
-            )
+            loadNotes()
         }
     }
 
@@ -234,6 +221,7 @@ class MainScreenViewModel(
         cacheNoteUIList = selectedNotes
         viewModelScope.launch(Dispatchers.IO) {
             selectedNotes.forEach { noteUIState ->
+                Log.e("MainScreenViewModel", "Deleting note: ${noteUIState.note}")
                 repository.delete(noteUIState.note)
             }
             loadNotes()

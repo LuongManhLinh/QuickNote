@@ -74,7 +74,7 @@ internal fun NoteList(
             val screenHeight = LocalConfiguration.current.screenHeightDp
             Spacer(
                 modifier = Modifier
-                    .height(screenHeight.dp / 3)
+                    .height(screenHeight.dp / 2)
             )
         }
     }
