@@ -89,7 +89,7 @@ private fun HorizontalDividerWidget(
             .fillMaxWidth()
             .height(1.dp)
             .background(
-                DividerDefaults.color
+                GlanceTheme.colors.outline
             )
     ) {
 

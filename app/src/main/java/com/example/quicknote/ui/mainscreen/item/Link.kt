@@ -2,7 +2,6 @@ package com.example.quicknote.ui.mainscreen.item
 
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -25,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -58,68 +55,72 @@ fun NoteContentLink(
 
     var offset by remember { mutableStateOf(IntOffset.Zero) }
 
-    Text(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    offset = IntOffset(it.x.toInt(), it.y.toInt())
-                    isPopupVisible = true
-                }
-            },
-        text = if (isLinkEmpty) {
-            stringResource(R.string.empty_link)
-        } else {
-            link
-        },
-        style = MaterialTheme.typography.bodyLarge,
-        color = if (isLinkEmpty) {
-            Color.Unspecified
-        } else {
-            if (isSystemInDarkTheme()) {
-                colorResource(R.color.link_on_dark)
-            } else {
-                colorResource(R.color.link_on_light)
-            }
-        },
-        textDecoration = if (isLinkEmpty) {
-            TextDecoration.None
-        } else {
-            TextDecoration.Underline
-        }
-    )
-
-    if (isPopupVisible) {
-        NoteContentLinkPopup(
-            offset = offset,
-            onOpenLinkClick = {
-                if (link.isNotEmpty()) {
-                    try {
-                        val validLink = if (link.startsWith("http://")
-                            || link.startsWith("https://"))
-                        {
-                            link
-                        } else {
-                            "https://$link"
-                        }
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        Toast.makeText(
-                            context, unableToOpenLink, Toast.LENGTH_SHORT
-                        ).show()
+    Box {
+        Text(
+            modifier = modifier
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        offset = IntOffset(it.x.toInt(), it.y.toInt())
+                        isPopupVisible = true
                     }
+                },
+            text = if (isLinkEmpty) {
+                stringResource(R.string.empty_link)
+            } else {
+                link
+            },
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (isLinkEmpty) {
+                Color.Unspecified
+            } else {
+                if (isSystemInDarkTheme()) {
+                    colorResource(R.color.link_on_dark)
+                } else {
+                    colorResource(R.color.link_on_light)
                 }
             },
-            onCopyClick = {
-                clipboardManager.setText(AnnotatedString(link))
-                Toast.makeText(
-                    context, copiedToClipboard, Toast.LENGTH_SHORT
-                ).show()
-                isPopupVisible = false
-            },
-            onDismissRequest = { isPopupVisible = false },
+            textDecoration = if (isLinkEmpty) {
+                TextDecoration.None
+            } else {
+                TextDecoration.Underline
+            }
         )
+
+        if (isPopupVisible) {
+            NoteContentLinkPopup(
+                offset = offset,
+                onOpenLinkClick = {
+                    if (link.isNotEmpty()) {
+                        try {
+                            val validLink = if (link.startsWith("http://")
+                                || link.startsWith("https://"))
+                            {
+                                link
+                            } else {
+                                "https://$link"
+                            }
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(validLink))
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(
+                                context, unableToOpenLink, Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                },
+                onCopyClick = {
+                    clipboardManager.setText(AnnotatedString(link))
+                    Toast.makeText(
+                        context, copiedToClipboard, Toast.LENGTH_SHORT
+                    ).show()
+                    isPopupVisible = false
+                },
+                onDismissRequest = { isPopupVisible = false },
+            )
+        }
     }
+
+
 }
 
 @Composable

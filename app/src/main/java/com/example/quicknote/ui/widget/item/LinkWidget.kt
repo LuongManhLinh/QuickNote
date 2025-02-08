@@ -3,6 +3,7 @@ package com.example.quicknote.ui.widget.item
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
@@ -26,12 +27,12 @@ fun NoteContentLinkWidget(
         },
         style = TextStyle(
             textDecoration = if (isLinkEmpty) {
-                null
+                TextDecoration.None
             } else {
                 TextDecoration.Underline
             },
             color = if (isLinkEmpty) {
-                ColorProvider(Color.Unspecified)
+                GlanceTheme.colors.onBackground
             } else {
                 ColorProvider(Color(0xFF1f6bdc))
             }
